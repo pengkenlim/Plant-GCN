@@ -21,7 +21,7 @@ def load_fasta(path, sep=".", level =1):
     for chunk in contents:
         transcript_ID = chunk.split("\n")[0].split(" ")[0].split("\t")[0]
         if len(transcript_ID.split(sep)) > 1:
-            Gene_ID = "".join(transcript_ID.split(sep)[:level])
+            Gene_ID = "".join(transcript_ID.split(sep)[:-level])
         else:
             Gene_ID = transcript_ID
         length = len("".join(chunk.split("\n")[1:]))
@@ -40,3 +40,9 @@ def fasta_dump(gene_dict , path):
     with open(path, "w") as f:
         for key , info in gene_dict.items():
             f.write(">" + info["Fasta_Chunk"])
+
+def get_Tid_2_Gid_dict(gene_dict):
+    Tid_2_Gid_dict = {}
+    for key , info in gene_dict.items():
+        Tid_2_Gid_dict[key] = info["Gene_ID"].upper()
+    return Tid_2_Gid_dict

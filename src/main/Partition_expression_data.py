@@ -5,7 +5,6 @@ import sys
 if __name__ == "__main__":
          abspath= __file__
          parent_module= "/".join(abspath.split("/")[:-2])
-         print(parent_module)
          sys.path.insert(0, parent_module)
 
 import argparse
@@ -31,10 +30,13 @@ if __name__ == "__main__":
         help = "Directory to output." )
 
         parser.add_argument("-i", "--input_path", type= str, metavar="", required = True,
-        help = "Path to expression matrix." )
+        help = "Path to expression matrix.")
 
         parser.add_argument("-de", "--delimiter", type= str, metavar="", default = "t", choices=["t", "c"],
         help = "Delimiter for expression matrix. -de=\"t\" for tab seperated (.tsv). -de=\"c\" for comma seperated (.csv). TSV by default." )
+        
+        parser.add_argument("-pc", "--pc_no", type= int, metavar="", default = 100,
+        help = "Number of Pincipal components to keep. Default = 100. It cannot be more than the number of samples and number of genes in in the expression matrix." )
 
         args=parser.parse_args()
         threads = args.threads
@@ -44,14 +46,54 @@ if __name__ == "__main__":
         os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
         os.environ["OMP_NUM_THREADS"] = str(threads)
         from sklearn_wrappers import kmeans , PCA
+        from data_processing import read_write, expression_matrix
 
         k_start = args.k_start
         k_end = args.k_end
         step = args.step
-        k_list = [i for i in range(k_start,k_end,step)]
+        k_list = [i for i in range(k_start,k_end+1,step)]
 
-        #check validity of input and output_dir
+        #check validity of input then create outputdir if not already exists
+        ouput_dir = args.ouput_dir
+        input_path = args.input_path
+
+        if not os.path.exists(input_path):
+                sys.exit("Error: {input_path} does not exist.")
+
+        if not os.path.exists(ouput_dir):
+                os.makedirs(ouput_dir)
+
+        #load exp_mat
+        delimiter = args.delimiter
+        if delimiter == "t":
+                delim = "\t"
+        else:
+                delim= ","
         
+        pc_no = args.pc_no
+        print("Loading expression matrix as pandas DataFrame...")
+        expmat_df = expression_matrix.load(input_path , expmatsep = delim, genecolname="target_id" )
+        
+        print(f"Performing standardization of expression matrix and embedding samples in {pc_no} principal components...")
+        pca_data , pc_variances = PCA.standardize_transform(expmat_df, n_pcs=pc_no)
+        del expmat_df
+        print(f"PCA complete. {pc_no} PCs representing {sum(pc_variances)}% of variance retained. Writing PCA data to output..." )
+        read_write.to_pickle(pca_data , os.path.join(ouput_dir,"PCA_data.pkl"))
+        
+        print(f"Performing K-means clustering....")
+        k_cluster_assignment_dict , silhouette_coefficients, centroids_dict = kmeans.iterate_over_krange(pca_data, k_list ,randomstate=42)
+
+        print(f"Writing k-means clustering data to output folder...")
+        read_write.to_pickle(k_cluster_assignment_dict, os.path.join(ouput_dir,"k_cluster_assignment_dict.pkl"))
+        read_write.to_pickle(silhouette_coefficients, os.path.join(ouput_dir, "k_cluster_assignment_dict.pkl"))
+        
+        print("ks selected based on silhouette coefficient peaks:")
+        selected_k = kmeans.select_k(silhouette_coefficients)
+        out = [print(f"k={k}")for k in selected_k]
+        read_write.to_pickle(selected_k, os.path.join(ouput_dir,"selected_k.pkl"))
+
+        print("Partition_expression_data.py complete")
+    
 
 
 

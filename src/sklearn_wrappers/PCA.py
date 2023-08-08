@@ -9,17 +9,18 @@ if __name__ == "__main__":
          sys.path.insert(0, parent_module)
 
 from sklearn.decomposition import PCA, IncrementalPCA
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
-def PCA_transformer(Matrix, n_pcs=100):
+def standardize_transform(Matrix, n_pcs=100):
     """normalize Matrix, transpose into dataframe"""
     #normalize colummns (within samples)
-    print("normalize colummns (within samples)")
+    #print("normalize colummns (within samples)")
     sample_normalized_matrix = pd.DataFrame(StandardScaler().fit_transform(Matrix).T,
                                             index=Matrix.columns,
                                             columns=Matrix.index)
-    print("PCA transformation")
+    #print("PCA transformation")
     #PCA transformation
     #pca = PCA()
     pca = IncrementalPCA(n_components=n_pcs, batch_size=5000) # Vital to prevent memory overload
