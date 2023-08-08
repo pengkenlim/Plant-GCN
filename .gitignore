@@ -2,3 +2,17 @@
 test_data/test_out_.fasta
 test_data/test_out.fasta
 test_data/test_out.fasta
+src/edge_labels/plantcyc.py
+met_edges.tsv
+test_data/20201221-160810-taxid3702_tpm_matrix.Downsamplek86.tsv
+test_data/BrapaFPsc_277_v1.3.transcript_primaryTranscriptOnly.fa
+test_data/taxid3711_expmat.tsv
+test_data/taxid3711_qc_info.tsv
+test_data/PED_out_dir/k_cluster_assignment_dict.pkl
+test_data/PED_out_dir/PCA_data.pkl
+test_data/QCED_outdir/taxid3711_filtered_qc_summary.txt
+test_data/QCED_outdir/taxid3711_filtered.tsv
+test_data/RI_out/taxid3771_primary_transcripts.fasta
+test_data/RI_out/taxid3771_primary_transcriptsTid2Gid_dict.pkl
+test_data/RI_out/test_out.fasta
+test_data/RI_out/test_outTid2Gid_dict.pkl
