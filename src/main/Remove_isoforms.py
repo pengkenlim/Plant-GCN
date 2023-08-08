@@ -6,7 +6,7 @@ if __name__ == "__main__":
          parent_module= "/".join(abspath.split("/")[:-2])
          sys.path.insert(0, parent_module)
 
-from data_processing import fasta
+from data_processing import fasta, read_write
 
 if __name__ == "__main__":
         parser= argparse.ArgumentParser(description="Remove_isoforms.py\n\
@@ -45,5 +45,9 @@ if __name__ == "__main__":
                 print(f"Total number of genes: \n{len(gene_dict)}")
                 fasta.fasta_dump(gene_dict,output)
                 print(f"Primary transcripts fasta written to: \n{output}")
+                Tid2Gid_dict = fasta.get_Tid_2_Gid_dict(gene_dict)
+                read_write.to_pickle( Tid2Gid_dict, ".".join(output.split(".")[:-1])+"Tid2Gid_dict.pkl")
         else:
             pass
+        
+"/mnt/g/My\ Drive/Ken/projects/Kingdom/Kingdom_scripts/common_data/Annotations/ATTED-II_group/3711"
