@@ -19,8 +19,8 @@ if __name__ == "__main__":
         parser.add_argument("-ps", "--p_pseudoaligned", type=float, metavar="", default=20, 
         help = "Specifies p_pseudoaligned as outputed by kallisto as threshold for quality control. Expression data of accessions that do not meet this threshold will be removed from expression data.")
 
-        parser.add_argument("-o", "--ouput_path", type=str, metavar="", required = True,
-        help = "Path to write the new expression matrix" )
+        parser.add_argument("-o", "--ouput_dir", type=str, metavar="", required = True,
+        help = "Path to write the new expression matrix and qc summary" )
 
         parser.add_argument("-i", "--input_path", type= str, metavar="", required = True,
         help = "Path to expression matrix.")
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
         args=parser.parse_args()
         p_pseudoaligned= args.p_pseudoaligned
-        ouput_path= args.ouput_path
+        ouput_dir= args.ouput_dir
         input_path= args.input_path
         input_data_path = args.input_data_path
         delimiter= args.delimiter
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         print(f"\n\nQC completed. Here are the stats:\nTotal samples: {len(total)}\nFailed: {len(failed)}\nPassed: {len(passed)}\nP_ps threshold: {cutoff}\n\n")
         
         #writing summarry.
-        summary_path = ".".join(ouput_path.split(".")[:-1]) + "_qc_summary.txt" 
+        summary_path = os.path.join(ouput_dir, "qc_summary.txt")
         read_write.establish_dir(summary_path)
         with open(summary_path, "w") as f:
               f.write(f"QC completed. Here are the stats:\nTotal samples: {len(total)}\nFailed: {len(failed)}\nPassed: {len(passed)}\nP_ps threshold: {cutoff}")
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         print("Removing failed samples form expression matrix and writting to output...\n")
         print(expmat_df)
         expmat_df = expression_matrix.subset(expmat_df, passed)
-        expression_matrix.write(expmat_df, ouput_path, expmatsep = delim)
+        expression_matrix.write(expmat_df, os.path.join(ouput_dir, f"expression_matrix.{delimiter}sv"), expmatsep = delim)
 
         print("QC_expression_data.py completed\n")
 

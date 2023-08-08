@@ -33,12 +33,12 @@ def mine_info_generate_edges(PMNCODE, met_annot_dict, All_genes, EXP=False, crit
             if line != "":
                 geneID = line.split("\t")[1].split(".")[0].upper()
                 if EXP:
-                    #if line.split("\t")[-1] == "EV-EXP" and geneID in All_genes:
-                    if line.split("\t")[-1] == "EV-EXP":                
+                    if line.split("\t")[-1] == "EV-EXP" and geneID in All_genes:
+                    #if line.split("\t")[-1] == "EV-EXP":                
                         Genes[geneID]= line.split("\t")[3]
                 else:
-                    #if geneID in All_genes:
-                    if True:
+                    if geneID in All_genes:
+                    #if True:
                         Genes[geneID]= line.split("\t")[3]
         met_annot_dict[PWY]["Genes"] = Genes
 
@@ -75,12 +75,10 @@ def edge_dump(met_annot_dict, path ,type="Cri_1"):
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # testing the code
     PMNCODE = "MTRUNCATULA"
     All_genes = []
     met_annot_dict_2 = get_pathways(PMNCODE)
-    met_annot_dict_2 = mine_info_generate_edges(PMNCODE, met_annot_dict_2, All_genes, EXP=False)
+    met_annot_dict_2 = mine_info_generate_edges(PMNCODE, met_annot_dict_2, All_genes, EXP=False, criterion_2_cutoff = 5)
     path = "./met_edges.tsv"
-
     edge_dump(met_annot_dict_2, path, type = "Cri_2")
-    #print(met_annot_dict)

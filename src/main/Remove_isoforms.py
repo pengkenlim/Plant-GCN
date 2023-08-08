@@ -16,8 +16,8 @@ if __name__ == "__main__":
                                 fasta files, output paths and parameters.")
         ME_group_1.add_argument("-i", "--input_fasta", type=str, metavar="", help= "Input path to fasta file to process")
         
-        parser.add_argument("-o", "--output", type=str, metavar="", default="", 
-        help = "Output path to write processed cDNA fasta file. Not required for --b / --batch_mode.")
+        parser.add_argument("-o", "--output_dir", type=str, metavar="", default="", 
+        help = "Output directory to write processed cDNA fasta file. Not required for --b / --batch_mode.")
 
         parser.add_argument("-de", "--delimiter", type=str, metavar="", default=".", 
         help = "Delimiter to use to find GeneID of transcripts. \".\" will be used by default.\n\
@@ -31,23 +31,23 @@ if __name__ == "__main__":
         if args.batch_mode == None:
                 #proceed with single mode
                 input_fasta = args.input_fasta
-                output = args.output
+                output_dir = args.output_dir
                 delimiter= args.delimiter
                 level = args.level
-                if output == "":
+                if output_dir == "":
                     sys.exit("--output not specified")
-                if not os.path.exists("/".join(output.split("/")[:-1])):
-                       os.makedirs("/".join(output.split("/")[:-1]))
+                read_write.establish_dir(output_dir, isdir = True)
 
                 fasta_contents_dict = fasta.load_fasta(input_fasta, sep = delimiter, level = level)
                 print(f"Total number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)-1}")
                 gene_dict =  fasta.retain_longest_isoforms(fasta_contents_dict)
                 print(f"Total number of genes: \n{len(gene_dict)}")
-                fasta.fasta_dump(gene_dict,output)
-                print(f"Primary transcripts fasta written to: \n{output}")
+                fasta_outpath = os.path.join(output_dir, "primary_transcripts.fasta")
+                fasta.fasta_dump(gene_dict, output_dir)
+                print(f"Primary transcripts fasta written to: \n{output_dir}")
                 Tid2Gid_dict = fasta.get_Tid_2_Gid_dict(gene_dict)
-                read_write.to_pickle( Tid2Gid_dict, ".".join(output.split(".")[:-1])+"Tid2Gid_dict.pkl")
+                read_write.to_pickle( Tid2Gid_dict, os.path.join(output_dir , "Tid2Gid_dict.pkl"))
         else:
             pass
         
-"/mnt/g/My\ Drive/Ken/projects/Kingdom/Kingdom_scripts/common_data/Annotations/ATTED-II_group/3711"
+        print("Remove_isoforms.py completed")

@@ -20,8 +20,11 @@ def to_pickle( data , write_path):
     with open(write_path, 'wb') as f:
         pickle.dump(data, f)
 
-def establish_dir(path):
-     """"create all directiories within the path if it does not already exist"""
-     path_dir = "/".join(path.split("/")[:-1])
-     if not os.path.exists(path_dir):
-          os.makedirs(path_dir)
+def establish_dir(path, isdir = False):
+    """"create all directiories within the path if it does not already exist"""
+    if isdir:
+        path_dir = path
+    else:     
+        path_dir = "/".join(path.split("/")[:-1])
+    if not os.path.exists(path_dir):
+        os.makedirs(path_dir)
