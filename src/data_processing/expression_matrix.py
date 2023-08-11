@@ -62,8 +62,3 @@ def load_qc(path):
                         pass
     return maprate_dict
 
-def get_genes(expmat_df,  sep=".", level =1):
-     All_genes = list(expmat_df.index)
-     All_genes = ["".join(transcript_ID.split(sep)[:level]) if len(transcript_ID.split(sep)) > 1 else transcript_ID for transcript_ID in All_genes]
-     All_genes = [gene.upper() for gene in All_genes]
-     return All_genes

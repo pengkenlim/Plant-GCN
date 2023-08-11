@@ -48,6 +48,7 @@ if __name__ == "__main__":
                 Tid2Gid_dict = fasta.get_Tid_2_Gid_dict(gene_dict)
                 read_write.to_pickle( Tid2Gid_dict, os.path.join(output_dir , "Tid2Gid_dict.pkl"))
         else:
+            #batch mode is not yet implemented
             pass
         
         print("Remove_isoforms.py completed")

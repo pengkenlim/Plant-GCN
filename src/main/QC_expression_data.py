@@ -20,7 +20,7 @@ if __name__ == "__main__":
         help = "Specifies p_pseudoaligned as outputed by kallisto as threshold for quality control. Expression data of accessions that do not meet this threshold will be removed from expression data.")
 
         parser.add_argument("-o", "--ouput_dir", type=str, metavar="", required = True,
-        help = "Path to write the new expression matrix and qc summary" )
+        help = "Working directory containing required data of which to output data." )
 
         parser.add_argument("-i", "--input_path", type= str, metavar="", required = True,
         help = "Path to expression matrix.")
@@ -59,8 +59,9 @@ if __name__ == "__main__":
         total, failed, passed, cutoff = expression_matrix.thresholder(maprate_dict, p_pseudoaligned)
         print(f"\n\nQC completed. Here are the stats:\nTotal samples: {len(total)}\nFailed: {len(failed)}\nPassed: {len(passed)}\nP_ps threshold: {cutoff}\n\n")
         
+        sub_outdir =  os.path.join(ouput_dir, "QC_expression_data")
         #writing summarry.
-        summary_path = os.path.join(ouput_dir, "qc_summary.txt")
+        summary_path = os.path.join(sub_outdir, "qc_summary.txt")
         read_write.establish_dir(summary_path)
         with open(summary_path, "w") as f:
               f.write(f"QC completed. Here are the stats:\nTotal samples: {len(total)}\nFailed: {len(failed)}\nPassed: {len(passed)}\nP_ps threshold: {cutoff}")
@@ -69,7 +70,7 @@ if __name__ == "__main__":
         print("Removing failed samples form expression matrix and writting to output...\n")
         print(expmat_df)
         expmat_df = expression_matrix.subset(expmat_df, passed)
-        expression_matrix.write(expmat_df, os.path.join(ouput_dir, f"expression_matrix.{delimiter}sv"), expmatsep = delim)
+        expression_matrix.write(expmat_df, os.path.join(sub_outdir, f"expression_matrix.{delimiter}sv"), expmatsep = delim)
 
         print("QC_expression_data.py completed\n")
 

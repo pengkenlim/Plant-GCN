@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
 import requests
 from collections import Counter
+
 def get_pathways(PMNCODE):
     met_annot_dict = {}
     exp_pathways_URL=f"https://pmn.plantcyc.org/{PMNCODE}/search-query?type=PATHWAY"
@@ -73,6 +74,12 @@ def edge_dump(met_annot_dict, path ,type="Cri_1"):
     with open(path, "w") as f:
         f.write(string)
 
+def extract_edges(met_annot_dict,type="Cri_1"):
+    positive_met_edges = []
+    for PWY , info in met_annot_dict.items():
+        for edge in info["Edges"][type]:
+            positive_met_edges.append(edge)
+    return positive_met_edges
 
 
 if __name__ == "__main__": # testing the code
