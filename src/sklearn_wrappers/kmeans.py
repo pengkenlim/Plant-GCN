@@ -30,19 +30,21 @@ def iterate_over_krange(data, k_list, sizemax=0, randomstate=42):
         print(f"K-means iteration at k={k} complete.SC:{silhouette_score(data, kmeans.labels_)}\n")
     return k_cluster_assignment_dict , silhouette_coefficients, centroids_dict
 
-def select_k(silhouette_coefficients):
+def select_k(silhouette_coefficients,k_cluster_assignment_dict):
     """"select Ks where silhoette coefficients peaks"""
     selected_list = []
     score = 0
-    for k in silhouette_coefficients.keys():
-        if silhouette_coefficients[k] < score:
+    k_list = list(k_cluster_assignment_dict.keys())
+    for k, sc in zip(k_list, silhouette_coefficients):
+        if sc < score:
             selected_list.append(prev_k)
-        score = silhouette_coefficients[k]
-        prev_k = k
+        else:
+            prev_k = k
+        score = sc
     selected_list.append(k)
-    selected_list = list(set(selected_list))
+    selected_list = sorted(list(set(selected_list)))
     return selected_list
-
+     
 #if __name__ == "__main__":
 #    silhouette_coefficients= {0:0.1,
 #                              1:0.2,

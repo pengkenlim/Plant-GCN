@@ -17,7 +17,7 @@ if __name__ == "__main__":
         ME_group_1.add_argument("-i", "--input_fasta", type=str, metavar="", help= "Input path to fasta file to process")
         
         parser.add_argument("-o", "--output_dir", type=str, metavar="", default="", 
-        help = "Output directory to write processed cDNA fasta file. Not required for --b / --batch_mode.")
+        help = "Ouput working director to create subfolders in. Not required for --b / --batch_mode.")
 
         parser.add_argument("-de", "--delimiter", type=str, metavar="", default=".", 
         help = "Delimiter to use to find GeneID of transcripts. \".\" will be used by default.\n\
@@ -37,16 +37,23 @@ if __name__ == "__main__":
                 if output_dir == "":
                     sys.exit("--output not specified")
                 read_write.establish_dir(output_dir, isdir = True)
+                sub_outdir = os.path.join(output_dir, "Remove_isoforms")
+                read_write.establish_dir(sub_outdir, isdir = True)
 
                 fasta_contents_dict = fasta.load_fasta(input_fasta, sep = delimiter, level = level)
-                print(f"Total number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)-1}")
+                print(f"\n\nTotal number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)-1}\n")
                 gene_dict =  fasta.retain_longest_isoforms(fasta_contents_dict)
-                print(f"Total number of genes: \n{len(gene_dict)}")
-                fasta_outpath = os.path.join(output_dir, "primary_transcripts.fasta")
-                fasta.fasta_dump(gene_dict, output_dir)
-                print(f"Primary transcripts fasta written to: \n{output_dir}")
-                Tid2Gid_dict = fasta.get_Tid_2_Gid_dict(gene_dict)
-                read_write.to_pickle( Tid2Gid_dict, os.path.join(output_dir , "Tid2Gid_dict.pkl"))
+                print(f"Total number of genes: \n{len(gene_dict)}\n")
+                fasta_outpath = os.path.join(sub_outdir, "primary_transcripts.fasta")
+                fasta.fasta_dump(gene_dict, fasta_outpath)
+                print(f"Primary transcripts fasta written to: \n{fasta_outpath}\n")
+                Tid2Gid_dict = fasta.get_Tid_2_Gid_dict(fasta_contents_dict)
+                eg_tid = list(Tid2Gid_dict.keys())[1]
+                eg_gid = Tid2Gid_dict[eg_tid]
+                print(f"Example of how Gene_ID is obtained from Transcript_ID:\n\
+                      {eg_tid} --> {eg_gid}\n\n")
+
+                read_write.to_pickle( Tid2Gid_dict, os.path.join(sub_outdir , "Tid2Gid_dict.pkl"))
         else:
             #batch mode is not yet implemented
             pass

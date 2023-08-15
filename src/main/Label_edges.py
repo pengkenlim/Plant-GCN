@@ -20,7 +20,7 @@ if __name__ == "__main__":
                                         Edges connnect enzymes within the same pathway that catalyses different reaction step.")
 
 
-        parser.add_argument("-o", "--ouput_dir", type=str, metavar="", required = True,
+        parser.add_argument("-o", "--output_dir", type=str, metavar="", required = True,
         help = "Working directory containing required data of which to output data. Requires Tid2Gid_dict.pkl from Remove_isoforms.py to get GeneIDs." )
 
         parser.add_argument("-sc", "--species_code", type= str, metavar="", required = True,
@@ -36,21 +36,22 @@ if __name__ == "__main__":
         
         #arg parse
         args=parser.parse_args()
-        ouput_dir = args.ouput_dir
+        output_dir = args.output_dir
         species_code = args.species_code
         criterion = args.criterion
         dataset_size = args.dataset_size
 
         
         #read Tid2Gid_dict.pkl to get all genes
-        Tid2Gid_dict_path = os.path.join(ouput_dir, "Remove_isoforms", "Tid2Gid_dict.pkl")
+        Tid2Gid_dict_path = os.path.join(output_dir, "Remove_isoforms", "Tid2Gid_dict.pkl")
         Tid2Gid_dict = read_write.load_pickle(Tid2Gid_dict_path)
-        All_genes = Tid2Gid_dict.values()
+        All_genes = list(Tid2Gid_dict.values())
+
 
         #mine Plantcyc using species code
         print(f"Getting pathways from plantcyc using species_code = {species_code} ...")
         met_annot_dict =  plantcyc.get_pathways(species_code)
-        print(f"Getting pathways info and generating edges. Criterion = {criterion} ")
+        print(f"Getting pathways info and generating edges... Criterion = {criterion} ")
         if criterion == 1:
                 met_annot_dict = plantcyc.mine_info_generate_edges(species_code, met_annot_dict, All_genes, EXP=True)
         elif criterion == 2:
@@ -58,7 +59,7 @@ if __name__ == "__main__":
 
         print("Mining completed. Saving positive sample data to output dir...")
         #make subdirectory to write out
-        sub_outdir = os.path.join(ouput_dir, "Label_edges")
+        sub_outdir = os.path.join(output_dir, "Label_edges")
         read_write.establish_dir(sub_outdir, isdir=True)
         
         #save tsv and pickle file
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         print(f"{len(positive_met_edges)} positive edges generated using Criterion = {criterion}.\n")
         
         print("Generating negative sample data...")
-        negative_met_edges = negative_edges.generate_dict(positive_met_edges, All_genes ,interation = dataset_size)
+        negative_met_edges = negative_edges.generate_dict(positive_met_edges, All_genes ,iterations = dataset_size)
         read_write.to_pickle(negative_met_edges, os.path.join(sub_outdir, "negative_met_edges.pkl"))
         
         print("Label_edges.py completed")

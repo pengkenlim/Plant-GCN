@@ -33,7 +33,8 @@ def generate_dict(positive_edges, All_genes, iterations=100):
              negative_edges_set.add("-".join(sorted(list(source_target))))
 
         negative_edges[i] = list(negative_edges_set)
-        print(i,"/",iterations, "negative sample datasets generated")
+        if i % 10 == 0:
+            print(i,"/",iterations, "negative sample datasets generated")
     return negative_edges
 
 

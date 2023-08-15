@@ -32,7 +32,7 @@ def mine_info_generate_edges(PMNCODE, met_annot_dict, All_genes, EXP=False, crit
         Edges={"All":[], "Cri_1": [], "Cri_2": []}
         for line in page_string[3:]:
             if line != "":
-                geneID = line.split("\t")[1].split(".")[0].upper()
+                geneID = line.split("\t")[1].upper()
                 if EXP:
                     if line.split("\t")[-1] == "EV-EXP" and geneID in All_genes:
                     #if line.split("\t")[-1] == "EV-EXP":                
@@ -64,7 +64,7 @@ def mine_info_generate_edges(PMNCODE, met_annot_dict, All_genes, EXP=False, crit
             print(P_idx, "pathways mined")
     return met_annot_dict
 
-def edge_dump(met_annot_dict, path ,type="Cri_1"):
+def edge_dump_deprecated(met_annot_dict, path ,type="Cri_1"):
     string = []
     for PWY , info in met_annot_dict.items():
         Name = info["Name"]
@@ -74,18 +74,36 @@ def edge_dump(met_annot_dict, path ,type="Cri_1"):
     with open(path, "w") as f:
         f.write(string)
 
+def edge_dump(met_annot_dict, path ,type="Cri_1"):
+    edge_dict = {}
+    for PWY , info in met_annot_dict.items():
+        Name = info["Name"]
+        for edge in info["Edges"][type]:
+            if edge not in edge_dict.keys():
+                edge_dict[edge]={"PWY":PWY, "Name":Name}
+            else:
+                edge_dict[edge]={"PWY":edge_dict[edge]["PWY"] + "|" + PWY, "Name":edge_dict[edge]["Name"]+ "|" + Name} #for when an edge is belongs to more than one pathway
+    string = []
+    for edge, info in edge_dict.items():
+        Name = info["Name"]
+        PWY = info["PWY"]
+        string.append(f"{edge}\t{PWY}\t{Name}\n")
+    string = "".join(string)
+    with open(path, "w") as f:
+        f.write(string)
+
 def extract_edges(met_annot_dict,type="Cri_1"):
     positive_met_edges = []
     for PWY , info in met_annot_dict.items():
         for edge in info["Edges"][type]:
             positive_met_edges.append(edge)
-    return positive_met_edges
+    return list(set(positive_met_edges)) #to get rid of duplicates
 
 
 if __name__ == "__main__": # testing the code
-    PMNCODE = "MTRUNCATULA"
+    PMNCODE = "BRAPA_FPSC"
     All_genes = []
-    met_annot_dict_2 = get_pathways(PMNCODE)
-    met_annot_dict_2 = mine_info_generate_edges(PMNCODE, met_annot_dict_2, All_genes, EXP=False, criterion_2_cutoff = 5)
+    met_annot_dict = get_pathways(PMNCODE)
+    met_annot_dict= mine_info_generate_edges(PMNCODE, met_annot_dict, All_genes, EXP=False, criterion_2_cutoff = 5)
     path = "./met_edges.tsv"
-    edge_dump(met_annot_dict_2, path, type = "Cri_2")
+    edge_dump(met_annot_dict, path, type = "Cri_2")

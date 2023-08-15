@@ -68,7 +68,7 @@ if __name__ == "__main__":
         
         #removing failed samples form expression matrix and writting to file.
         print("Removing failed samples form expression matrix and writting to output...\n")
-        print(expmat_df)
+        #print(expmat_df)
         expmat_df = expression_matrix.subset(expmat_df, passed)
         expression_matrix.write(expmat_df, os.path.join(sub_outdir, f"expression_matrix.{delimiter}sv"), expmatsep = delim)
 
