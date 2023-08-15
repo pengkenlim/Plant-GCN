@@ -10,7 +10,7 @@ if __name__ == "__main__":
 from scipy import stats, integrate
 import numpy as np
 from sklearn import metrics
-import math
+
 
 def calc_AUC_ROC(pos_score, neg_score, return_thresholds =False):
     scores = pos_score + neg_score
@@ -42,7 +42,7 @@ def extract_edge_score(edges, score_dict, score_type):
 
 def nan2value(scores, n=-1):
     """convert nan values to something else"""
-    new_scores = [-1 if np.isnan(i) else -i for i in scores]
+    new_scores = [-1 if np.isnan(i) else i for i in scores]
     return new_scores
 
 def calc_quartiles(performance_scores):
@@ -55,14 +55,14 @@ def evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_edges , 
     for score_type in score_types:
         performance_dict[score_type] = {"AUC_ROC":{},"AUC_PRC":{}, "AVG":{}}
         positive_scores = nan2value(extract_edge_score( positive_edges, positive_edges_cor_dict, score_type))
-    for ds , negative_edges_cor_dict_values  in negative_edges_cor_dict.items():
-        negative_scores = nan2value(extract_edge_score(negative_edges, negative_edges_cor_dict_values, score_type))
-        
-        performance_dict[score_type]["AUC_ROC"][ds] = calc_AUC_ROC(positive_scores, negative_scores, return_thresholds =False)
-        performance_dict[score_type]["AUC_PRC"][ds] = calc_AUC_PRC(positive_scores, negative_scores, return_thresholds =False)
-        performance_dict[score_type]["AVG"][ds] = np.mean(performance_dict[score_type]["AUC_ROC"][ds], performance_dict[score_type]["AUC_PRC"][ds])
-    performance_dict[score_type]["Quartiles"] = {}
-    performance_dict[score_type]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type]["AUC_ROC"].values()))
-    performance_dict[score_type]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type]["AUC_PRC"].values()))
-    performance_dict[score_type]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["AVG"].values()))
+        for ds , negative_edges_cor_dict_values  in negative_edges_cor_dict.items():
+            negative_scores = nan2value(extract_edge_score(negative_edges[ds], negative_edges_cor_dict_values, score_type))
+            performance_dict[score_type]["AUC_ROC"][ds] = calc_AUC_ROC(positive_scores, negative_scores, return_thresholds =False)
+            performance_dict[score_type]["AUC_PRC"][ds] = calc_AUC_PRC(positive_scores, negative_scores, return_thresholds =False)
+            performance_dict[score_type]["AVG"][ds] = np.mean([performance_dict[score_type]["AUC_ROC"][ds], performance_dict[score_type]["AUC_PRC"][ds]])
+        performance_dict[score_type]["Quartiles"] = {}
+        performance_dict[score_type]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type]["AUC_ROC"].values()))
+        performance_dict[score_type]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type]["AUC_PRC"].values()))
+        performance_dict[score_type]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["AVG"].values()))
     return performance_dict
+
