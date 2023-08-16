@@ -46,6 +46,7 @@ if __name__ == "__main__":
         Tid2Gid_dict_path = os.path.join(output_dir, "Remove_isoforms", "Tid2Gid_dict.pkl")
         Tid2Gid_dict = read_write.load_pickle(Tid2Gid_dict_path)
         All_genes = list(Tid2Gid_dict.values())
+        out = [print(key, value) for key, value in Tid2Gid_dict.items() if value == ""]
 
 
         #mine Plantcyc using species code

@@ -54,8 +54,12 @@ def evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_edges , 
     performance_dict = {}
     for score_type in score_types:
         performance_dict[score_type] = {"AUC_ROC":{},"AUC_PRC":{}, "AVG":{}}
+        print(positive_edges_cor_dict)
+        print(positive_edges[:5])
         positive_scores = nan2value(extract_edge_score( positive_edges, positive_edges_cor_dict, score_type))
         for ds , negative_edges_cor_dict_values  in negative_edges_cor_dict.items():
+            print(negative_edges_cor_dict_values)
+            print(negative_edges[ds][:5])
             negative_scores = nan2value(extract_edge_score(negative_edges[ds], negative_edges_cor_dict_values, score_type))
             performance_dict[score_type]["AUC_ROC"][ds] = calc_AUC_ROC(positive_scores, negative_scores, return_thresholds =False)
             performance_dict[score_type]["AUC_PRC"][ds] = calc_AUC_PRC(positive_scores, negative_scores, return_thresholds =False)
@@ -66,3 +70,8 @@ def evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_edges , 
         performance_dict[score_type]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["AVG"].values()))
     return performance_dict
 
+def summarize_and_out(k_sub_outdir, score_types, performance_dict):
+        with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
+                f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
+                for score_type in score_types:
+                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")

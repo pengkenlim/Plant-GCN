@@ -18,6 +18,7 @@ def load_fasta(path, sep=".", level =1):
     with open(path,"r" ) as f:
         contents = f.read()
     contents = contents.split(">")
+    contents = [chunk for chunk in contents if chunk != ""]
     for chunk in contents:
         transcript_ID = chunk.split("\n")[0].split(" ")[0].split("\t")[0]
         if len(transcript_ID.split(sep)) > 1:
@@ -44,5 +45,6 @@ def fasta_dump(gene_dict , path):
 def get_Tid_2_Gid_dict(fasta_contents_dict):
     Tid_2_Gid_dict = {}
     for key , info in fasta_contents_dict.items():
-        Tid_2_Gid_dict[key] = info["Gene_ID"].upper()
+        if key != "" and info["Gene_ID"] != "":
+            Tid_2_Gid_dict[key] = info["Gene_ID"].upper()
     return Tid_2_Gid_dict

@@ -64,32 +64,80 @@ if __name__ == "__main__":
         
         for cc in correlation_coefficients:
                 print(f"Calculating ensemble scores of edges across k range for correlation coefficient: \'{cc}\'")
+                k_cluster_assignment_dict[1]= np.array([ 0 for i in range(len(k_cluster_assignment_dict[selected_k[0]]))])
+                selected_k = [1]+ selected_k
                 for k in selected_k:
                         k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
                         read_write.establish_dir(k_sub_outdir, isdir =True)
-                        genes, gene_dict , norm_weights_dict = bicor.precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
                         
-                        print("Calculating and writing correlations of positive edges...")
-                        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
-                        bicor.calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
-                       
-                        print("Calculating and writing correlations of negative edges...")
-                        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
-                        bicor.calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
-                
-                print(f"Evaluating performance across k range for correlation coefficient: \'{cc}\'")
-                for k in selected_k:
-                        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
-                        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
-                        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
-                        positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path, negative_met_edges_cor_path, negative_met_edges, score_types = ['Max','Avg','RAvg','RWA','RRWA'])
-                        performance_dict = network_performance.evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_met_edges , negative_met_edges, score_types)
-                        read_write.to_pickle(performance_dict,  os.path.join(k_sub_outdir, "performance_dict.pkl"))
-                        with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
-                                f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
-                                for score_type in score_types:
-                                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+                        
+                        bicor.optimize_k(k, k_sub_outdir, expmat_path, Tid2Gid_dict,  
+                                        k_cluster_assignment_dict, delim, workers, 
+                                        positive_met_edges, negative_met_edges_unpacked)
+                        
+                        positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path,
+                                                                                                        negative_met_edges_cor_path, 
+                                                                                                        negative_met_edges, 
+                                                                                                        score_types = ['Max','Avg','RAvg','RWA','RRWA'])
+                        performance_dict = network_performance.evaluate(positive_edges_cor_dict, 
+                                                                        negative_edges_cor_dict, 
+                                                                        positive_met_edges , 
+                                                                        negative_met_edges, 
+                                                                        score_types)
+                        read_write.to_pickle(performance_dict,  
+                                        os.path.join(k_sub_outdir, "performance_dict.pkl"))
+                        
+                        network_performance.summarize_and_out(k_sub_outdir, score_types, performance_dict)
                         print(f"k= {k} completed.")
+
+                        #genes, gene_dict , norm_weights_dict = bicor.precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+                        
+                        #print("Calculating and writing correlations of positive edges...")
+                        #positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
+                        #bicor.calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
+                        
+                        #print("Calculating and writing correlations of negative edges...")
+                        #negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
+                        #bicor.calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
+                        
+                        #positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path, negative_met_edges_cor_path, negative_met_edges, score_types = ['Max','Avg','RAvg','RWA','RRWA'])
+                        #performance_dict = network_performance.evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_met_edges , negative_met_edges, score_types)
+                        
+                        #read_write.to_pickle(performance_dict,  os.path.join(k_sub_outdir, "performance_dict.pkl"))
+                        #with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
+                        #        f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
+                        #        for score_type in score_types:
+                        #                f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+                
+                #print(f"Calculating ensemble scores of edges across k range for correlation coefficient: \'{cc}\'")
+                #for k in selected_k:
+                #        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
+                #        read_write.establish_dir(k_sub_outdir, isdir =True)
+                #        genes, gene_dict , norm_weights_dict = bicor.precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+                #        
+                #        print("Calculating and writing correlations of positive edges...")
+                #        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
+                #        bicor.calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
+                #       
+                #        print("Calculating and writing correlations of negative edges...")
+                #        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
+                #        bicor.calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
+                
+                #print(f"Evaluating performance across k range for correlation coefficient: \'{cc}\'")
+                #for k in selected_k:
+                #        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
+                #        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
+                #        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
+                #        positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path, negative_met_edges_cor_path, negative_met_edges, score_types = ['Max','Avg','RAvg','RWA','RRWA'])
+                #        performance_dict = network_performance.evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_met_edges , negative_met_edges, score_types)
+                #        read_write.to_pickle(performance_dict,  os.path.join(k_sub_outdir, "performance_dict.pkl"))
+                #        with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
+                #                f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
+                #                for score_type in score_types:
+                #                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+                #        print(f"k= {k} completed.")
+
+
                       
 
 

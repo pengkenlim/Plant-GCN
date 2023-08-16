@@ -14,9 +14,9 @@ import multiprocessing as mp
 from coexpression import ensemble
 
 
-np.seterr(all="ignore") # remove
 
 def calc_job(source_array, target_array, norm_weights_dict, cluster):
+    np.seterr(all="ignore") # to remove this pesky runtime warning
     cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster][:,source_array,:], norm_weights_dict[cluster][:,target_array, :])
     cor_means = np.nanmean(cor_values, axis=0)
     return cor_means
@@ -45,7 +45,7 @@ def precalc_job(idx, line, delimiter, k,Tid2Gid_dict, assignment):
         for cluster in range(k):
             cluster , norm_weights = get_norm_weights(cluster, all_values, assignment)
             norm_weights_gene_dict[cluster] = norm_weights
-        if idx % 1000 ==0:
+        if idx % 5000 ==0:
                     print("k=", k,":", idx , "genes prepared.")
         return gene, norm_weights_gene_dict
 
@@ -70,43 +70,6 @@ def precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter="
         gene_dict[gene] = idx
     return genes, gene_dict , norm_weights_dict
 
-def calc_targeted_deprecated(k, path, edges , genes, gene_dict, norm_weights_dict, workers = 2):
-    manager = mp.Manager()
-    shared_norm_weights_dict = manager.dict(norm_weights_dict)
-    #add header if creating new file
-    if not os.path.exists(path):
-        with open(path, "w") as f:
-            f.write("Edge\tcluster_cor\tcluster_cor_med\tcluster_SD\tMax,Avg,RAvg,RWA,RRWA\n")
-    source_array , target_array= [], []
-    cor_index = {}
-    n=0
-    for edge in list(edges):
-        source, target = edge.split("-")
-        if source in genes and target in genes:
-            cor_index[edge] = n #to retrieve the correlation scores later on
-            source_array.append(gene_dict[source])
-            target_array.append(gene_dict[target])
-            n+=1
-    ALL_cor_means = []
-    with cf.ProcessPoolExecutor(max_workers=workers) as executor:
-        results = [executor.submit(calc_job, source_array, target_array, shared_norm_weights_dict, cluster) for cluster in range(k)]
-        for f in cf.as_completed(results):
-            cor_means = f.result()
-            ALL_cor_means.append(cor_means)
-    ALL_cor_means = np.array(ALL_cor_means)
-    with open(path, "a") as f:
-        for edge in list(edges):
-            if np.isnan(cor_index.get(edge, math.nan)):
-                cluster_cor = np.array([math.nan for i in range(k)]) # basically if edge is not found in cor_index, we return cluster_cor of all nan values
-            else:
-                cluster_cor= ALL_cor_means[:,cor_index.get(edge)]
-            ensemble_scores = []
-            for mode in ["Max", "Avg", "RAvg", "RWA", "RRWA"]:
-                ensemble_scores.append(ensemble.aggregate( cluster_cor , mode))
-        # writing to path
-            cluster_cor = ",".join([str(i) for i in cluster_cor])
-            ensemble_scores = ",".join([str(i) for i in ensemble_scores])
-            f.write(f"{edge}\t{cluster_cor}\t{ensemble_scores}\n")
 
 
 def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers = 2):
@@ -115,7 +78,7 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
     #add header if creating new file
     if not os.path.exists(path):
         with open(path, "w") as f:
-            f.write("Edge\tcluster_cor\tcluster_cor_med\tcluster_SD\tMax,Avg,RAvg,RWA,RRWA\n")
+            f.write("Edge\tcluster_cor\tMax,Avg,RAvg,RWA,RRWA\n")
     source_array , target_array= [], []
     calculated_edges =[]
     failed_edges = []
@@ -149,7 +112,7 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
         
         for edge in failed_edges:
             cluster_cor = np.array([math.nan for i in range(k)])
-            ensemble_scores = np.array([math.nan for i in range(k)])
+            ensemble_scores = np.array([math.nan for i in ["Max", "Avg", "RAvg", "RWA", "RRWA"]])
             cluster_cor = ",".join([str(i) for i in cluster_cor])
             ensemble_scores = ",".join([str(i) for i in ensemble_scores])
             f.write(f"{edge}\t{cluster_cor}\t{ensemble_scores}\n")
@@ -162,13 +125,14 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
 def calc_untargeted():
     pass
         
-#bagging_array_dict = {}
-#clustersize = 20
-#for cluster in range(4):
-##    bagging_array_dict[cluster] = []
- #   for i in range(10):
- #       bagging_array_dict[cluster].append(np.random.choice(clustersize, size=(clustersize), replace=False))
-  #  bagging_array_dict[cluster] = np.array(bagging_array_dict[cluster])
+def optimize_k(k, k_sub_outdir, expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked):
+       genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+       print("Calculating and writing correlations of positive edges...")
+       positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
+       calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
+       print("Calculating and writing correlations of negative edges...")
+       negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
+       calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
 
 
 

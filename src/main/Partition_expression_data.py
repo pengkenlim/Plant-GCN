@@ -85,7 +85,7 @@ if __name__ == "__main__":
         read_write.to_pickle(silhouette_coefficients, os.path.join(sub_outdir, "silhouette_coefficients.pkl"))
         
         print("ks selected based on silhouette coefficient peaks:")
-        selected_k = kmeans.select_k(silhouette_coefficients, k_cluster_assignment_dict)
+        selected_k = kmeans.select_k_window(silhouette_coefficients, k_cluster_assignment_dict)
         out = [print(f"k={k}")for k in selected_k]
         read_write.to_pickle(selected_k, os.path.join(sub_outdir,"selected_k.pkl"))
 

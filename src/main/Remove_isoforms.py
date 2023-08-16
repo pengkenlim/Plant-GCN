@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 read_write.establish_dir(sub_outdir, isdir = True)
 
                 fasta_contents_dict = fasta.load_fasta(input_fasta, sep = delimiter, level = level)
-                print(f"\n\nTotal number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)-1}\n")
+                print(f"\n\nTotal number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)}\n")
                 gene_dict =  fasta.retain_longest_isoforms(fasta_contents_dict)
                 print(f"Total number of genes: \n{len(gene_dict)}\n")
                 fasta_outpath = os.path.join(sub_outdir, "primary_transcripts.fasta")
