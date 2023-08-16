@@ -70,8 +70,10 @@ if __name__ == "__main__":
                         k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
                         read_write.establish_dir(k_sub_outdir, isdir =True)
                         
+                        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
+                        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
                         
-                        bicor.optimize_k(k, k_sub_outdir, expmat_path, Tid2Gid_dict,  
+                        bicor.optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path,expmat_path, Tid2Gid_dict,  
                                         k_cluster_assignment_dict, delim, workers, 
                                         positive_met_edges, negative_met_edges_unpacked)
                         
@@ -136,16 +138,3 @@ if __name__ == "__main__":
                 #                for score_type in score_types:
                 #                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
                 #        print(f"k= {k} completed.")
-
-
-                      
-
-
-                        
-
-
-
-        
-
-
-
