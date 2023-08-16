@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
 #func definitions
 
-def load_fasta(path, sep=".", level =1):
+def load_fasta(path, replace, replace_with, exclude, sep=".",  level =1):
     """use sep to specify delimiter to split TranscriptID into GeneID
     Default is '.' 
     e.g. GENE_1234.1 --> GENE_1234"""
@@ -25,8 +25,10 @@ def load_fasta(path, sep=".", level =1):
             Gene_ID = sep.join(transcript_ID.split(sep)[:-level])
         else:
             Gene_ID = transcript_ID
+        Gene_ID = Gene_ID.upper().replace(replace, replace_with)
         length = len("".join(chunk.split("\n")[1:]))
-        fasta_contents_dict[transcript_ID]= {"Gene_ID":Gene_ID, "Fasta_Chunk": chunk, "Length": length}
+        if exclude.upper() not in transcript_ID.upper():
+            fasta_contents_dict[transcript_ID]= {"Gene_ID":Gene_ID, "Fasta_Chunk": chunk, "Length": length}
     return fasta_contents_dict
 
 def retain_longest_isoforms(fasta_contents_dict):

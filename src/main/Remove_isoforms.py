@@ -27,6 +27,10 @@ if __name__ == "__main__":
                             Use level=1 if transcriptIDs look like  AT1GXXXXXX.1\n\
                             Use level=2 if transcriptIDs look like  AT1GXXXXXX.1.1.")
         
+        parser.add_argument("-r", "--replace", type=str, metavar="", default="", help= "Substring within transcriptIDs to replace in order to get geneIDs")
+        parser.add_argument("-rw", "--replace_with", type=str, metavar="", default= "", help= "replacement string")
+        parser.add_argument("-ex", "--exclude", type=str, metavar="", default= "impossibleplaceholder", help= "exclude transcripts with these substrings")
+        
         args=parser.parse_args()
         if args.batch_mode == None:
                 #proceed with single mode
@@ -34,13 +38,17 @@ if __name__ == "__main__":
                 output_dir = args.output_dir
                 delimiter= args.delimiter
                 level = args.level
+                replace = args.replace
+                replace_with = args.replace_with
+                exclude = args.exclude
+                
                 if output_dir == "":
                     sys.exit("--output not specified")
                 read_write.establish_dir(output_dir, isdir = True)
                 sub_outdir = os.path.join(output_dir, "Remove_isoforms")
                 read_write.establish_dir(sub_outdir, isdir = True)
 
-                fasta_contents_dict = fasta.load_fasta(input_fasta, sep = delimiter, level = level)
+                fasta_contents_dict = fasta.load_fasta(input_fasta, replace, replace_with, exclude, sep = delimiter, level = level)
                 print(f"\n\nTotal number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)}\n")
                 gene_dict =  fasta.retain_longest_isoforms(fasta_contents_dict)
                 print(f"Total number of genes: \n{len(gene_dict)}\n")
