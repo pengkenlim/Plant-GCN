@@ -12,11 +12,12 @@ import math
 import concurrent.futures as cf
 import multiprocessing as mp
 from coexpression import ensemble
+import warnings
 
 
 
 def calc_job(source_array, target_array, norm_weights_dict, cluster):
-    np.seterr(all="ignore") # to remove this pesky runtime warning
+    warnings.filterwarnings(action='ignore', message='Mean of empty slice')
     cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster][:,source_array,:], norm_weights_dict[cluster][:,target_array, :])
     cor_means = np.nanmean(cor_values, axis=0)
     return cor_means
