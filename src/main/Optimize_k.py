@@ -8,10 +8,11 @@ if __name__ == "__main__":
          sys.path.insert(0, parent_module)
 
 import argparse
-from coexpression import bicor #for now only bicor is online
+from coexpression import bicor , pearson , spearman #for now only bicor and PCC is online
 from data_processing import read_write, network
 from analyses import network_performance
 import numpy as np
+import pandas as pd
 np.seterr(all="ignore")
 
 if __name__ == "__main__":
@@ -29,8 +30,8 @@ if __name__ == "__main__":
         parser.add_argument("-de", "--delimiter", type= str, metavar="", default = "t", choices=["t", "c"],
         help = "Delimiter for expression matrix. -de=\"t\" for tab seperated (.tsv). -de=\"c\" for comma seperated (.csv). TSV by default." )
 
-        parser.add_argument("-cc","--correlation_coefficient", type=str, default = "bicor", choices = ["PCC","SCC","bicor","all"] ,
-        help = "Correlation coefficient to optimize for. \'bicor\' by default. \'all\' to optimize for all correlation coeffiecients. NOTE: Only \'bicor\' is supported for now.")
+        parser.add_argument("-cc","--correlation_coefficient", type=str, default = "bicor", choices = ["PCC","SCC","bicor"] ,
+        help = "Correlation coefficient to optimize for. \'bicor\' by default. NOTE: Only \'bicor\' is supported for now.")
 
         args=parser.parse_args()
         
@@ -38,10 +39,7 @@ if __name__ == "__main__":
         ouput_dir=args.ouput_dir
         delimiter=args.delimiter
         correlation_coefficient = args.correlation_coefficient
-        if correlation_coefficient == "all":
-                correlation_coefficients = ["PCC","SCC","bicor"]
-        else:
-                correlation_coefficients = [correlation_coefficient]
+
         
         sub_outdir = os.path.join(ouput_dir , "Optimize_k")
         if delimiter == "t":
@@ -62,25 +60,41 @@ if __name__ == "__main__":
         negative_met_edges_unpacked = list(set(negative_met_edges_unpacked))
         
         
-        for cc in correlation_coefficients:
+        for cc in [correlation_coefficient]:
+                #establish dataframes to store and write performance results
+                AVG_full_df, AUC_ROC_full_df, AUC_PRC_full_df = pd.DataFrame() , pd.DataFrame(), pd.DataFrame()
+                AVG_summ_df, AUC_ROC_summ_df, AUC_PRC_summ_df = pd.DataFrame() , pd.DataFrame(), pd.DataFrame()
+                cc_sub_outdir = os.path.join(sub_outdir ,cc)
+
                 print(f"Calculating ensemble scores of edges across k range for correlation coefficient: \'{cc}\'")
                 k_cluster_assignment_dict[1]= np.array([ 0 for i in range(len(k_cluster_assignment_dict[selected_k[0]]))])
                 selected_k = [1]+ selected_k
+                
+
                 for k in selected_k:
-                        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
+                        k_sub_outdir = os.path.join(cc_sub_outdir, f"{k}_K")
                         read_write.establish_dir(k_sub_outdir, isdir =True)
                         
                         positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
                         negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
                         
-                        bicor.optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path,expmat_path, Tid2Gid_dict,  
+                        if cc == "bicor":
+                                optimize_k = bicor.optimize_k
+                        elif cc == "PCC":
+                                optimize_k = pearson.optimize_k
+                        elif cc == "SCC":
+                                #optimize_k = spearman.optimize_k
+                                pass
+                        
+                        optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path,expmat_path, Tid2Gid_dict,  
                                         k_cluster_assignment_dict, delim, workers, 
                                         positive_met_edges, negative_met_edges_unpacked)
                         
+                        score_types = ['Max','Avg','RAvg','RWA','RRWA']
                         positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path,
                                                                                                         negative_met_edges_cor_path, 
                                                                                                         negative_met_edges, 
-                                                                                                        score_types = ['Max','Avg','RAvg','RWA','RRWA'])
+                                                                                                        score_types = score_types)
                         performance_dict = network_performance.evaluate(positive_edges_cor_dict, 
                                                                         negative_edges_cor_dict, 
                                                                         positive_met_edges , 
@@ -88,53 +102,33 @@ if __name__ == "__main__":
                                                                         score_types)
                         read_write.to_pickle(performance_dict,  
                                         os.path.join(k_sub_outdir, "performance_dict.pkl"))
+                        ##performance_dict = read_write.load_pickle(os.path.join(k_sub_outdir, "performance_dict.pkl"))
                         
                         network_performance.summarize_and_out(k_sub_outdir, score_types, performance_dict)
-                        print(f"k= {k} completed.")
 
-                        #genes, gene_dict , norm_weights_dict = bicor.precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+                        #store results in dataframe
                         
-                        #print("Calculating and writing correlations of positive edges...")
-                        #positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
-                        #bicor.calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
-                        
-                        #print("Calculating and writing correlations of negative edges...")
-                        #negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
-                        #bicor.calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
-                        
-                        #positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path, negative_met_edges_cor_path, negative_met_edges, score_types = ['Max','Avg','RAvg','RWA','RRWA'])
-                        #performance_dict = network_performance.evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_met_edges , negative_met_edges, score_types)
-                        
-                        #read_write.to_pickle(performance_dict,  os.path.join(k_sub_outdir, "performance_dict.pkl"))
-                        #with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
-                        #        f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
-                        #        for score_type in score_types:
-                        #                f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+                        AVG_full_df = network_performance.cat_k_to_df(AVG_full_df, score_types, performance_dict, k, "AVG" , full = True)
+                        AUC_ROC_full_df = network_performance.cat_k_to_df(AUC_ROC_full_df, score_types, performance_dict, k, "AUC_ROC" , full = True)
+                        AUC_PRC_full_df = network_performance.cat_k_to_df(AUC_PRC_full_df, score_types, performance_dict, k, "AUC_PRC" , full = True)
+
+                        AVG_summ_df = network_performance.cat_k_to_df(AVG_summ_df, score_types, performance_dict, k, "AVG" , full = False)
+                        AUC_ROC_summ_df = network_performance.cat_k_to_df(AUC_ROC_summ_df, score_types, performance_dict, k, "AUC_ROC" , full = False)
+                        AUC_PRC_summ_df = network_performance.cat_k_to_df(AUC_PRC_summ_df, score_types, performance_dict, k, "AUC_PRC" , full = False)
+
+                        print(f"k= {k} completed.")
                 
-                #print(f"Calculating ensemble scores of edges across k range for correlation coefficient: \'{cc}\'")
-                #for k in selected_k:
-                #        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
-                #        read_write.establish_dir(k_sub_outdir, isdir =True)
-                #        genes, gene_dict , norm_weights_dict = bicor.precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
-                #        
-                #        print("Calculating and writing correlations of positive edges...")
-                #        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
-                #        bicor.calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
-                #       
-                #        print("Calculating and writing correlations of negative edges...")
-                #        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
-                #        bicor.calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
+                print(f"Getting best k and worst k based on AVG(AUC_ROC,AUC_PRC) scores...")
+                AVG_full_df.to_csv(os.path.join(cc_sub_outdir, "AVG_full_scores.csv"))
+                AUC_ROC_full_df.to_csv(os.path.join(cc_sub_outdir, "AUC_ROC_full_scores.csv"))
+                AUC_PRC_full_df.to_csv(os.path.join(cc_sub_outdir, "AUC_PRC_full_scores.csv"))
                 
-                #print(f"Evaluating performance across k range for correlation coefficient: \'{cc}\'")
-                #for k in selected_k:
-                #        k_sub_outdir = os.path.join(sub_outdir ,cc, f"{k}_K")
-                #        positive_met_edges_cor_path = os.path.join(k_sub_outdir, "positive_met_edges_cor.tsv")
-                #        negative_met_edges_cor_path = os.path.join(k_sub_outdir, "negative_met_edges_cor.tsv")
-                #        positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_met_edges_cor_path, negative_met_edges_cor_path, negative_met_edges, score_types = ['Max','Avg','RAvg','RWA','RRWA'])
-                #        performance_dict = network_performance.evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_met_edges , negative_met_edges, score_types)
-                #        read_write.to_pickle(performance_dict,  os.path.join(k_sub_outdir, "performance_dict.pkl"))
-                #        with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
-                #                f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
-                #                for score_type in score_types:
-                #                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
-                #        print(f"k= {k} completed.")
+                AVG_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_summ_scores.csv"))
+                AUC_ROC_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUC_ROC_summ_scores.csv"))
+                AUC_PRC_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUC_ROC_summ_scores.csv"))
+
+                result_string = network_performance.best_worst_k(AVG_summ_df, score_types)
+                print(result_string)
+                with open(os.path.join(cc_sub_outdir, "Best_worst_k.csv"), "w") as f:
+                        f.write(result_string)
+

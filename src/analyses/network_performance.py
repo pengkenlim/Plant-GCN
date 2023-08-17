@@ -10,7 +10,7 @@ if __name__ == "__main__":
 from scipy import stats, integrate
 import numpy as np
 from sklearn import metrics
-
+import pandas as pd
 
 def calc_AUC_ROC(pos_score, neg_score, return_thresholds =False):
     scores = pos_score + neg_score
@@ -71,3 +71,54 @@ def summarize_and_out(k_sub_outdir, score_types, performance_dict):
                 f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
                 for score_type in score_types:
                         f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+
+def cat_k_to_df(performance_df, score_types, performance_dict, k, metric , full = True):
+    try:
+        # check whether performance_df is empty
+        out = performance_df[0]
+        del out
+    except:
+        index_col = []
+        index2_col = []
+        if full:
+            out = [[index_col.append(score_type) for i in range(3)] for score_type in score_types]
+            out = [[index2_col.append(i) for i in ["Q1","Med","Q3"]] for score_type in score_types]
+        else:
+            out = [[index_col.append(score_type) for i in range(1)] for score_type in score_types]
+            out = [index2_col.append("Med") for score_type in score_types]
+        performance_df.index = index_col
+        performance_df["Stat"] = index2_col
+    
+    col_values = []
+    for score_type in score_types:
+        if full:
+            for i in range(3):
+                col_values.append(performance_dict[score_type]['Quartiles'][metric][i])
+        else:
+            i = 1
+            col_values.append(performance_dict[score_type]['Quartiles'][metric][i])
+
+    performance_df[k] = col_values
+
+    return performance_df
+
+def best_worst_k(performance_df, score_types):
+    result_string = ["Score_type\tmax_score\tmax_k\tmin_score\tmin_k\n"]
+    for score_type in score_types:
+        scores = list(performance_df.loc[score_type])[1:]
+        k_list = list(performance_df.columns)[1:]
+        
+        max_score = np.max(scores )
+        max_k = k_list[scores.index( max_score)]
+
+        min_score = np.max(scores)
+        min_k = k_list[scores.index( min_score)]
+
+        result_string.append(f"{score_type}\t{max_score}\t{max_k}\t{min_score}\t{min_k}\n")
+    result_string = "".join(result_string)
+    return result_string
+        
+        
+     
+
+
