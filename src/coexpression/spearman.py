@@ -61,7 +61,7 @@ def calc_targeted(k, path, edges , genes, gene_dict, nominators_dict, denominato
     source_array , target_array= [], []
 
     for edge in list(edges):
-        source, target = edge.split("-")
+        source, target = edge.split("--")
         source_array.append(gene_dict[source])
         target_array.append(gene_dict[target])
 

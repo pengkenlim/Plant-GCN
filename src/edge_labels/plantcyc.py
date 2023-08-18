@@ -50,11 +50,11 @@ def mine_info_generate_edges(PMNCODE, met_annot_dict, All_genes, EXP=False, crit
             S_RXN = Genes[source]
             for target in list(Genes.keys())[idx+1:]:
                 if target != source:
-                    Edges["All"].append( "-".join(sorted([source, target])) )
+                    Edges["All"].append( "--".join(sorted([source, target])) )
                     if Genes[target] != S_RXN:
-                        Edges["Cri_1"].append( "-".join(sorted([source, target])) )
+                        Edges["Cri_1"].append( "--".join(sorted([source, target])) )
                         if RXN_counts[Genes[target]] <= criterion_2_cutoff and RXN_counts[S_RXN] <= criterion_2_cutoff:
-                            Edges["Cri_2"].append( "-".join(sorted([source, target])) )            
+                            Edges["Cri_2"].append( "--".join(sorted([source, target])) )            
 
         met_annot_dict[PWY]["Edges"] = Edges
 

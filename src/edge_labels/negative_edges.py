@@ -23,14 +23,14 @@ def generate_dict(positive_edges, All_genes, iterations=100):
             target = random_gene_array[source_index + 1]
             if source == target: # unlikely as it might be, remove self pairing by using the gene further adjacent to the target as target
                 target = random_gene_array[source_index + 2]
-            negative_edges_set.add("-".join(sorted([source, target])))
+            negative_edges_set.add("--".join(sorted([source, target])))
 
         negative_edges_set = negative_edges_set - positive_edges_set #make sure negative and positive edges are mutually exclusive
         
         #compensate for edges removed.
         while len(negative_edges_set) < len(positive_edges_set):
              source_target = np.random.choice(All_genes, size = 2, replace=False)
-             negative_edges_set.add("-".join(sorted(list(source_target))))
+             negative_edges_set.add("--".join(sorted(list(source_target))))
 
         negative_edges[i] = list(negative_edges_set)
         if i % 10 == 0:
