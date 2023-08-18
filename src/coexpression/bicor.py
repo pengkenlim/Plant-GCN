@@ -115,7 +115,6 @@ def one_v_all(gene_idx, cluster, norm_weights_dict):
     return cor_means
 
 def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_weights_dict ,full=False):
-    print()
     All_cor_means = []
     for cluster in range(k):
         cor_means  = one_v_all(gene_idx, cluster, norm_weights_dict)
