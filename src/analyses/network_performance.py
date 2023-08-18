@@ -111,13 +111,14 @@ def best_worst_k(performance_df, score_types):
         max_score = np.max(scores )
         max_k = k_list[scores.index( max_score)]
 
-        min_score = np.max(scores)
+        min_score = np.min(scores)
         min_k = k_list[scores.index( min_score)]
 
         result_string.append(f"{score_type}\t{max_score}\t{max_k}\t{min_score}\t{min_k}\n")
     result_string = "".join(result_string)
     return result_string
-        
+
+
         
      
 

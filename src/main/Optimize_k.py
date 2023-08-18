@@ -23,35 +23,35 @@ if __name__ == "__main__":
         parser.add_argument("-w", "--workers", type=int, metavar="", default=4,
         help = "Number of workers for parallelization." )
 
-        parser.add_argument("-o", "--ouput_dir", type=str, metavar="", required = True,
+        parser.add_argument("-o", "--output_dir", type=str, metavar="", required = True,
         help = "Directory to output. Same as Label_edges.py and Partition_expression_data.py" )
 
         parser.add_argument("-de", "--delimiter", type= str, metavar="", default = "t", choices=["t", "c"],
         help = "Delimiter for expression matrix. -de=\"t\" for tab seperated (.tsv). -de=\"c\" for comma seperated (.csv). TSV by default." )
 
         parser.add_argument("-cc","--correlation_coefficient", type=str, default = "bicor", choices = ["PCC","SCC","bicor"] ,
-        help = "Correlation coefficient to optimize for. \'bicor\' by default. NOTE: Only \'bicor\' is supported for now.")
+        help = "Correlation coefficient to optimize for. \'bicor\' by default.")
 
         args=parser.parse_args()
         
         workers=args.workers
-        ouput_dir=args.ouput_dir
+        output_dir=args.output_dir
         delimiter=args.delimiter
         correlation_coefficient = args.correlation_coefficient
 
         
-        sub_outdir = os.path.join(ouput_dir , "Optimize_k")
+        sub_outdir = os.path.join(output_dir , "Optimize_k")
         if delimiter == "t":
                 delim = "\t"
         else:
                 delim = ","
         #load data needed from workdirectory
-        Tid2Gid_dict = read_write.load_pickle(os.path.join(ouput_dir , "Remove_isoforms" , "Tid2Gid_dict.pkl"))
-        k_cluster_assignment_dict =  read_write.load_pickle(os.path.join(ouput_dir, "Partition_expression_data", "k_cluster_assignment_dict.pkl"))
-        selected_k =  read_write.load_pickle(os.path.join(ouput_dir, "Partition_expression_data", "selected_k.pkl"))
-        expmat_path = os.path.join(ouput_dir, "QC_expression_data",  f"expression_matrix.{delimiter}sv")
-        positive_met_edges = read_write.load_pickle(os.path.join(ouput_dir, "Label_edges", "positive_met_edges.pkl"))
-        negative_met_edges = read_write.load_pickle(os.path.join(ouput_dir, "Label_edges", "negative_met_edges.pkl"))
+        Tid2Gid_dict = read_write.load_pickle(os.path.join(output_dir , "Remove_isoforms" , "Tid2Gid_dict.pkl"))
+        k_cluster_assignment_dict =  read_write.load_pickle(os.path.join(output_dir, "Partition_expression_data", "k_cluster_assignment_dict.pkl"))
+        selected_k =  read_write.load_pickle(os.path.join(output_dir, "Partition_expression_data", "selected_k.pkl"))
+        expmat_path = os.path.join(output_dir, "QC_expression_data",  f"expression_matrix.{delimiter}sv")
+        positive_met_edges = read_write.load_pickle(os.path.join(output_dir, "Label_edges", "positive_met_edges.pkl"))
+        negative_met_edges = read_write.load_pickle(os.path.join(output_dir, "Label_edges", "negative_met_edges.pkl"))
 
         negative_met_edges_unpacked = []
         for edges in negative_met_edges.values():

@@ -12,10 +12,10 @@ import concurrent.futures as cf
 import multiprocessing as mp
 from coexpression import ensemble
 import warnings
+import scipy
+import math
 
-
-
-def calc_job(source_array, target_array, norm_weights_dict, cluster):
+def calc_job_k(source_array, target_array, norm_weights_dict, cluster):
     warnings.filterwarnings(action='ignore', message='Mean of empty slice')
     cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster][:,source_array,:], norm_weights_dict[cluster][:,target_array, :])
     cor_means = np.nanmean(cor_values, axis=0)
@@ -23,6 +23,7 @@ def calc_job(source_array, target_array, norm_weights_dict, cluster):
 
 
 def get_norm_weights(cluster, all_values, assignment):
+    np.seterr(all="ignore")
     cluster_values = all_values[assignment == cluster]
     subvalues_D = np.array([cluster_values]) # shape is (1, len(cluster_values)) # so that it can handle 2D input in the future
     values_minus_med_D = subvalues_D - np.nanmedian(subvalues_D, axis=1).reshape(-1,1)
@@ -86,7 +87,7 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
         target_array.append(gene_dict[target])
     ALL_cor_means = []
     with cf.ProcessPoolExecutor(max_workers=workers) as executor:
-        results = [executor.submit(calc_job, source_array, target_array, shared_norm_weights_dict, cluster) for cluster in range(k)]
+        results = [executor.submit(calc_job_k, source_array, target_array, shared_norm_weights_dict, cluster) for cluster in range(k)]
         for f in cf.as_completed(results):
             cor_means = f.result()
             ALL_cor_means.append(cor_means)
@@ -107,18 +108,55 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
 
 
 
+def one_v_all(gene_idx, cluster, norm_weights_dict):
+    warnings.filterwarnings(action='ignore', message='Mean of empty slice')
+    cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster], np.broadcast_to(norm_weights_dict[cluster][:,[gene_idx], :], norm_weights_dict[cluster].shape))
+    cor_means = np.nanmean(cor_values, axis=0)
+    return cor_means
+
+def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_weights_dict ,full=False):
+    print()
+    All_cor_means = []
+    for cluster in range(k):
+        cor_means  = one_v_all(gene_idx, cluster, norm_weights_dict)
+        All_cor_means.append(cor_means)
+    ensemble_scores = ensemble.aggregate(All_cor_means, aggregation_method, axis = 0)
+    ensemble_ranks =  scipy.stats.rankdata(ensemble_scores, method="min", nan_policy= "omit") # this will give maximum rank
+    
+    #flip ranks to reverse ranks
+    if np.nanmax(ensemble_ranks) == 1: #happens when all ensemble scores are nan for what ever reason
+        ensemble_ranks = [math.nan for i in range(len(ensemble_ranks))]
+    else:
+        ensemble_ranks = np.nanmax(ensemble_ranks) - ensemble_ranks +1
+    
+    All_cor_means = [",".join([str(i2) for i2 in i]) for i in  np.transpose(All_cor_means)] # list of comma separated raw correlations
+
+    with open(os.path.join(network_path, gene), "w") as f:
+        for gene, cor, ES, rank in zip(genes, All_cor_means, ensemble_scores ,ensemble_ranks):
+            if full:
+                f.write(f"{gene}\t{cor}\t{ES}\t{rank}\n")
+            else:
+                f.write(f"{gene}\t{ES}\t{rank}\n")
+    return f"Calculated bicor ensemble correlations for sequence:{gene}, {gene_idx} out of {len(genes)}"
 
 
-def calc_untargeted():
-    pass
-        
+def calc_untargeted(k, genes , norm_weights_dict, aggregation_method, network_path, workers= 2):
+    with cf.ProcessPoolExecutor(max_workers=workers) as executor:
+        results = [executor.submit(calc_job , k, aggregation_method , genes, network_path, gene_idx, gene, norm_weights_dict) for gene_idx, gene in enumerate(genes)]
+        for f in cf.as_completed(results):
+            print(f.result())
+
 def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked):
-       genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
-       print("Calculating and writing correlations of positive edges...")
+    genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+    print("Calculating and writing correlations of positive edges...")
 
-       calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
-       print("Calculating and writing correlations of negative edges...")
-       calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
+    calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
+    print("Calculating and writing correlations of negative edges...")
+    calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
 
 
 
+def build_ensemble_GCN( Tid2Gid_dict, k_cluster_assignment_dict, expmat_path, k, network_path, aggregation_method, delim, workers):
+    genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+    print("Calculating and writing correlations...")
+    calc_untargeted(k, genes, norm_weights_dict, aggregation_method, network_path ,workers=workers)
