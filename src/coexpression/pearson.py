@@ -8,11 +8,9 @@ if __name__ == "__main__":
          sys.path.insert(0, parent_module)
 
 import numpy as np
-import math
 import concurrent.futures as cf
 import multiprocessing as mp
 from coexpression import ensemble
-import warnings
 
 
 def precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter="\t", workers=2):

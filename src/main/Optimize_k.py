@@ -13,7 +13,6 @@ from data_processing import read_write, network
 from analyses import network_performance
 import numpy as np
 import pandas as pd
-np.seterr(all="ignore")
 
 if __name__ == "__main__":
         
