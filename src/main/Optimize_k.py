@@ -83,8 +83,8 @@ if __name__ == "__main__":
                         elif cc == "PCC":
                                 optimize_k = pearson.optimize_k
                         elif cc == "SCC":
-                                #optimize_k = spearman.optimize_k
-                                pass
+                                optimize_k = spearman.optimize_k
+                                
                         
                         optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path,expmat_path, Tid2Gid_dict,  
                                         k_cluster_assignment_dict, delim, workers, 

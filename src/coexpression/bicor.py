@@ -81,16 +81,10 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
         with open(path, "w") as f:
             f.write("Edge\tcluster_cor\tMax,Avg,RAvg,RWA,RRWA\n")
     source_array , target_array= [], []
-    calculated_edges =[]
-    failed_edges = []
     for edge in list(edges):
         source, target = edge.split("-")
-        if source in genes and target in genes:
-            source_array.append(gene_dict[source])
-            target_array.append(gene_dict[target])
-            calculated_edges.append(edge)
-        else:
-            failed_edges.append(edge)
+        source_array.append(gene_dict[source])
+        target_array.append(gene_dict[target])
     ALL_cor_means = []
     with cf.ProcessPoolExecutor(max_workers=workers) as executor:
         results = [executor.submit(calc_job, source_array, target_array, shared_norm_weights_dict, cluster) for cluster in range(k)]
@@ -104,16 +98,9 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
         batch_ensemble_scores.append(ensemble.aggregate(ALL_cor_means, mode, axis = 0))
     batch_ensemble_scores = np.array(batch_ensemble_scores)
     with open(path, "a") as f:
-        for idx, edge in enumerate(calculated_edges):
+        for idx, edge in enumerate(edges):
             cluster_cor = ALL_cor_means[:,idx]
             ensemble_scores = batch_ensemble_scores[:,idx]
-            cluster_cor = ",".join([str(i) for i in cluster_cor])
-            ensemble_scores = ",".join([str(i) for i in ensemble_scores])
-            f.write(f"{edge}\t{cluster_cor}\t{ensemble_scores}\n")
-        
-        for edge in failed_edges:
-            cluster_cor = np.array([math.nan for i in range(k)])
-            ensemble_scores = np.array([math.nan for i in ["Max", "Avg", "RAvg", "RWA", "RRWA"]])
             cluster_cor = ",".join([str(i) for i in cluster_cor])
             ensemble_scores = ",".join([str(i) for i in ensemble_scores])
             f.write(f"{edge}\t{cluster_cor}\t{ensemble_scores}\n")
