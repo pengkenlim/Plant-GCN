@@ -22,6 +22,9 @@ if __name__ == "__main__":
 
         parser.add_argument("-st", "--step", type=int, metavar="", default=1,
         help = "Step to increase between each k. User is suggested to increase step if range is very big to decrease search space." )
+
+        parser.add_argument("-ws", "--window_size", type=int, metavar="", default=10,
+        help = "Window size to select k with peak Silhoette coefficients for downstream analysis." )
         
         parser.add_argument("-t", "--threads", type=int, metavar="", default=4,
         help = "Number of threads to use for PCA and Kmeans clustering. Handled by sklearn's parrelization." )
@@ -51,6 +54,7 @@ if __name__ == "__main__":
         k_start = args.k_start
         k_end = args.k_end
         step = args.step
+        window_size = args.window_size
         k_list = [i for i in range(k_start,k_end+1,step)]
 
         #check validity of input then create outputdir if not already exists
@@ -85,7 +89,7 @@ if __name__ == "__main__":
         read_write.to_pickle(silhouette_coefficients, os.path.join(sub_outdir, "silhouette_coefficients.pkl"))
         
         print("ks selected based on silhouette coefficient peaks:")
-        selected_k = kmeans.select_k_window(silhouette_coefficients, k_cluster_assignment_dict)
+        selected_k = kmeans.select_k_window(silhouette_coefficients, k_cluster_assignment_dict, window_size = window_size)
         out = [print(f"k={k}")for k in selected_k]
         read_write.to_pickle(selected_k, os.path.join(sub_outdir,"selected_k.pkl"))
 
