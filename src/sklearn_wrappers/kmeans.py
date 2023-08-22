@@ -11,11 +11,11 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-import pickle
+from data_processing import read_write
 
 #User functions
 
-def iterate_over_krange(data, k_list, sizemax=0, randomstate=42):
+def iterate_over_krange(data, k_list, k_cluster_assignment_dict_path , silhouette_coefficients_dict_path, randomstate=42):
     """Run kmeans clustering over a range of K"""
     kmeans_kwargs = {"init": "k-means++", "n_init": 10,"max_iter": 10000,"random_state": randomstate} #remove random
     silhouette_coefficients = []
@@ -27,7 +27,10 @@ def iterate_over_krange(data, k_list, sizemax=0, randomstate=42):
         silhouette_coefficients.append(silhouette_score(data, kmeans.labels_))
         centroids_dict[k]= kmeans.cluster_centers_
         k_cluster_assignment_dict[k]= kmeans.labels_
+        read_write.to_pickle(k_cluster_assignment_dict , k_cluster_assignment_dict_path)
+        read_write.to_pickle( silhouette_coefficients, silhouette_coefficients_dict_path)
         print(f"K-means iteration at k={k} complete.SC:{silhouette_score(data, kmeans.labels_)}\n")
+
     return k_cluster_assignment_dict , silhouette_coefficients, centroids_dict
 
 def select_k(silhouette_coefficients,k_cluster_assignment_dict):
