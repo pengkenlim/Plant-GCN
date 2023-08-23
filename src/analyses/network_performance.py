@@ -162,6 +162,38 @@ def cat_k_to_df(performance_df, score_types, performance_dict, k, metric , full 
 
     return performance_df
 
+
+def cat_k_to_df_ara(performance_df, score_types, performance_dict, k, edge_dataset, metric , full = True):
+    try:
+        # check whether performance_df is empty
+        out = performance_df[0]
+        del out
+    except:
+        index_col = []
+        index2_col = []
+        if full:
+            out = [[index_col.append(score_type) for i in range(3)] for score_type in score_types]
+            out = [[index2_col.append(i) for i in ["Q1","Med","Q3"]] for score_type in score_types]
+        else:
+            out = [[index_col.append(score_type) for i in range(1)] for score_type in score_types]
+            out = [index2_col.append("Med") for score_type in score_types]
+        performance_df.index = index_col
+        performance_df["Stat"] = index2_col
+    
+    col_values = []
+    for score_type in score_types:
+        if full:
+            for i in range(3):
+                col_values.append(performance_dict[score_type][edge_dataset]['Quartiles'][metric][i])
+        else:
+            i = 1
+            col_values.append(performance_dict[score_type][edge_dataset]['Quartiles'][metric][i])
+
+    performance_df[k] = col_values
+
+    return performance_df
+
+
 def best_worst_k(performance_df, score_types):
     result_string = ["Score_type\tmax_score\tmax_k\tmin_score\tmin_k\n"]
     for score_type in score_types:
