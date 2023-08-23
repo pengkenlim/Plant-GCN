@@ -9,20 +9,23 @@ if __name__ == "__main__":
 
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans , BisectingKMeans
 from sklearn.metrics import silhouette_score
 from data_processing import read_write
 
 #User functions
 
-def iterate_over_krange(data, k_list, k_cluster_assignment_dict_path , silhouette_coefficients_dict_path, randomstate=42):
+def iterate_over_krange(data, k_list, k_cluster_assignment_dict_path , silhouette_coefficients_dict_path, mode="kmeans" ,randomstate=42):
     """Run kmeans clustering over a range of K"""
-    kmeans_kwargs = {"init": "k-means++", "n_init": 10,"max_iter": 10000,"random_state": randomstate} #remove random
+    kmeans_kwargs = {"init": "k-means++", "n_init": 5,"max_iter": 1000,"random_state": randomstate} #remove random
     silhouette_coefficients = []
     k_cluster_assignment_dict={}
     centroids_dict={}
     for k in k_list:
-        kmeans = KMeans(n_clusters=k, **kmeans_kwargs)
+        if mode == "kmeans" or k < 3:
+            kmeans = KMeans(n_clusters=k, **kmeans_kwargs)
+        elif mode == "bisectingkmeans":
+            kmeans = BisectingKMeans(n_clusters=k, **kmeans_kwargs)
         kmeans.fit(data)
         silhouette_coefficients.append(silhouette_score(data, kmeans.labels_))
         centroids_dict[k]= kmeans.cluster_centers_

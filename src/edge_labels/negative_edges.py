@@ -37,5 +37,15 @@ def generate_dict(positive_edges, All_genes, iterations=100):
             print(i,"/",iterations, "negative sample datasets generated")
     return negative_edges
 
+def edge_editor(dataset_edges , toreplace, replacement):
+    if type(dataset_edges) == list:
+        new_dataset_edges = [edge.replace(toreplace, replacement) for edge in dataset_edges]
+        return new_dataset_edges
+    elif type(dataset_edges) == dict:
+        new_dataset_edges_dict = {}
+        for key , edge_list in dataset_edges.items():
+            new_dataset_edges_dict[key] = [edge.replace(toreplace, replacement) for edge in edge_list]
+            return new_dataset_edges_dict
+
 
               

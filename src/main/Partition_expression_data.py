@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 print(f"Performing K-means clustering....")
                 k_cluster_assignment_dict_path = os.path.join(sub_outdir,"k_cluster_assignment_dict.pkl")
                 silhouette_coefficients_dict_path = os.path.join(sub_outdir, "silhouette_coefficients.pkl")
-                k_cluster_assignment_dict , silhouette_coefficients, centroids_dict = kmeans.iterate_over_krange(pca_data, k_list ,k_cluster_assignment_dict_path , silhouette_coefficients_dict_path, randomstate=42)
+                k_cluster_assignment_dict , silhouette_coefficients, centroids_dict = kmeans.iterate_over_krange(pca_data, k_list ,k_cluster_assignment_dict_path , silhouette_coefficients_dict_path, mode = "bisectingkmeans",randomstate=42)
 
                 print(f"Writing k-means clustering data to output folder...")
                 read_write.to_pickle(k_cluster_assignment_dict, os.path.join(sub_outdir,"k_cluster_assignment_dict.pkl"))

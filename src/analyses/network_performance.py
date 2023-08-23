@@ -66,11 +66,71 @@ def evaluate(positive_edges_cor_dict, negative_edges_cor_dict, positive_edges , 
         performance_dict[score_type]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["AVG"].values()))
     return performance_dict
 
+
+def evaluate_ara(positive_edges_cor_dict, negative_edges_cor_dict, positive_All_edges , negative_All_edges, positive_met_edges, negative_met_edges,positive_GO_edges, negative_GO_edges, positive_TF_edges, negative_TF_edges, score_types):
+    """main function."""
+    performance_dict={}
+    for score_type in score_types:
+        performance_dict[score_type] = {}
+        for edge_dataset in ["All", "Met", "GO", "TF"]:
+            performance_dict[score_type][edge_dataset] = {"AUC_ROC":{},"AUC_PRC":{}, "AVG":{}}
+            
+            if edge_dataset == "All":
+                positive_edges , negative_edges = positive_All_edges, negative_All_edges
+            elif edge_dataset == "Met":
+                positive_edges , negative_edges = positive_met_edges, negative_met_edges
+            elif edge_dataset == "GO":
+                positive_edges , negative_edges = positive_GO_edges, negative_GO_edges
+            elif edge_dataset == "TF":
+                positive_edges , negative_edges = positive_TF_edges, negative_TF_edges
+            
+            positive_scores = nan2value(extract_edge_score( positive_edges, positive_edges_cor_dict, score_type))
+            for ds , negative_edges_cor_dict_values  in negative_edges_cor_dict.items():
+                negative_scores = nan2value(extract_edge_score(negative_edges[ds], negative_edges_cor_dict_values, score_type))
+                performance_dict[score_type][edge_dataset]["AUC_ROC"][ds] = calc_AUC_ROC(positive_scores, negative_scores, return_thresholds =False)
+                performance_dict[score_type][edge_dataset]["AUC_PRC"][ds] = calc_AUC_PRC(positive_scores, negative_scores, return_thresholds =False)
+                performance_dict[score_type][edge_dataset]["AVG"][ds] = np.mean([performance_dict[score_type][edge_dataset]["AUC_ROC"][ds], 
+                                                                                 performance_dict[score_type][edge_dataset]["AUC_PRC"][ds]])
+            performance_dict[score_type][edge_dataset]["Quartiles"] = {}
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type][edge_dataset]["AUC_ROC"].values()))
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type][edge_dataset]["AUC_PRC"].values()))
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type][edge_dataset]["AVG"].values()))
+        #harmonic mean of scores
+        performance_dict[score_type]["HM"] = {"AUC_ROC":{},"AUC_PRC":{}, "AVG":{}}
+        for ds in negative_edges_cor_dict.keys():
+            performance_dict[score_type]["HM"]["AUC_ROC"][ds] = stats.hmean([performance_dict[score_type][edge_dataset]["AUC_ROC"][ds] for edge_dataset in ["Met", "GO", "TF"]])
+            performance_dict[score_type]["HM"]["AUC_PRC"][ds] = stats.hmean([performance_dict[score_type][edge_dataset]["AUC_ROC"][ds] for edge_dataset in ["Met", "GO", "TF"]])
+            performance_dict[score_type]["HM"]["AVG"][ds] = np.mean([performance_dict[score_type]["HM"]["AUC_ROC"][ds], 
+                                                                     performance_dict[score_type]["HM"]["AUC_PRC"][ds]])
+            
+            performance_dict[score_type][edge_dataset]["Quartiles"] = {}
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_ROC"].values()))
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_PRC"].values()))
+            performance_dict[score_type][edge_dataset]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AVG"].values()))
+            
+        return performance_dict
+
+
+
 def summarize_and_out(k_sub_outdir, score_types, performance_dict):
         with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
                 f.write(f"score_type\tAVG(AUC_ROC,AUC_PRC)\tAUC_ROC\tAUC_PRC\n")
                 for score_type in score_types:
-                        f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+                    f.write(f"{score_type}\t{performance_dict[score_type]['Quartiles']['AVG'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_ROC'][1]}\t{performance_dict[score_type]['Quartiles']['AUC_PRC'][1]}\n")
+
+def summarize_and_out_ara(k_sub_outdir, score_types, performance_dict):
+        with open(os.path.join(k_sub_outdir, "performance_summary.tsv"), "w") as f:
+                format = ["score_type" , "AVG(AUCROC_HM, AUCPRC_HM)", "AVG(AUCROC_All, AUCPRC_All)" , "AVG(AUCROC_Met, AUCPRC_Met)", 
+                          "AVG(AUCROC_GO, AUCPRC_GO)", "AVG(AUCROC_TF, AUCPRC_TF)"]
+                f.write("\t".join(format) + "\n")
+                for score_type in score_types:    
+                    scores = [score_type, performance_dict[score_type]["HM"]["Quartiles"]["AVG"][1],
+                              performance_dict[score_type]["All"]["Quartiles"]["AVG"][1],
+                              performance_dict[score_type]["Met"]["Quartiles"]["AVG"][1],
+                              performance_dict[score_type]["GO"]["Quartiles"]["AVG"][1],
+                              performance_dict[score_type]["TF"]["Quartiles"]["AVG"][1]]
+                    f.write("\t".join(scores) + "\n")
+
 
 def cat_k_to_df(performance_df, score_types, performance_dict, k, metric , full = True):
     try:
