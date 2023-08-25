@@ -51,7 +51,7 @@ def select_k(silhouette_coefficients,k_cluster_assignment_dict):
     selected_list = sorted(list(set(selected_list)))
     return selected_list
 
-def select_k_window(silhouette_coefficients,k_cluster_assignment_dict, window_size = 10):
+def select_k_window_dep(silhouette_coefficients,k_cluster_assignment_dict, window_size = 10):
     """"select Ks with maximum sc every window"""
     selected_list = []
     k_list = list(k_cluster_assignment_dict.keys())
@@ -66,6 +66,25 @@ def select_k_window(silhouette_coefficients,k_cluster_assignment_dict, window_si
             window.append(sc)
             K_window.append(k)
     return selected_list
+
+def select_k_window(silhouette_coefficients,k_cluster_assignment_dict, window_size = 10):
+    """"select Ks with maximum sc every window"""
+    selected_list = []
+    k_list = list(k_cluster_assignment_dict.keys())
+    max_k , min_k = np.max(k_list) , np.min(k_list)
+    window = []
+    window_min_K = min_k
+    for window_max_K in range(min_k+window_size, max_k, window_size):
+        for k in k_list:
+            if k >= window_min_K and k < window_max_K:
+                window.append(silhouette_coefficients[k_list.index(k)])
+        selected_list.append(k_list[silhouette_coefficients.index(np.max(window))])
+        window_min_K = window_max_K
+        window = []
+    return selected_list
+    
+
+     
      
 #if __name__ == "__main__":
 #    silhouette_coefficients= {0:0.1,
