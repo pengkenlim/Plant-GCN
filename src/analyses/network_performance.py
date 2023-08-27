@@ -103,12 +103,12 @@ def evaluate_ara(positive_edges_cor_dict, negative_edges_cor_dict, positive_All_
             performance_dict[score_type]["HM"]["AVG"][ds] = np.mean([performance_dict[score_type]["HM"]["AUC_ROC"][ds], 
                                                                      performance_dict[score_type]["HM"]["AUC_PRC"][ds]])
             
-            performance_dict[score_type][edge_dataset]["Quartiles"] = {}
-            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_ROC"].values()))
-            performance_dict[score_type][edge_dataset]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_PRC"].values()))
-            performance_dict[score_type][edge_dataset]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AVG"].values()))
+            performance_dict[score_type]["HM"]["Quartiles"] = {}
+            performance_dict[score_type]["HM"]["Quartiles"]["AUC_ROC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_ROC"].values()))
+            performance_dict[score_type]["HM"]["Quartiles"]["AUC_PRC"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AUC_PRC"].values()))
+            performance_dict[score_type]["HM"]["Quartiles"]["AVG"] = calc_quartiles(list(performance_dict[score_type]["HM"]["AVG"].values()))
             
-        return performance_dict
+    return performance_dict
 
 
 
