@@ -18,4 +18,4 @@
 #python ~/Plant-GCN/src/main/Partition_expression_data.py -t 100 -ks 2 -ke 601 -pc 601 -ws 11 -o /mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b1/taxid29760
 #python ~/Plant-GCN/src/main/Partition_expression_data.py -t 100 -ks 2 -ke 660 -pc 660 -ws 13 -o /mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b1/taxid3847
 #python ~/Plant-GCN/src/main/Partition_expression_data.py -t 100 -ks 2 -ke 806 -pc 806 -st 2 -ws 16 -o /mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b1/taxid4081
-python ~/Plant-GCN/src/main/Partition_expression_data.py -t 64 -ks 2 -ke 1000 -pc 1000 -st 5  -ws 19 -np -ks -o /mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b1/taxid4577
+python ~/Plant-GCN/src/main/Partition_expression_data.py -t 64 -ks 2 -ke 1000 -pc 1000 -st 5  -ws 19 -np -nk -o /mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b1/taxid4577
