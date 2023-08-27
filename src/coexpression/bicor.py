@@ -14,10 +14,13 @@ from coexpression import ensemble
 import warnings
 import scipy
 import math
+from einsumt import einsumt
 
-def calc_job_k(source_array, target_array, norm_weights_dict, cluster):
+def calc_job_k(source_array, target_array, norm_weights_dict, cluster, threads):
     warnings.filterwarnings(action='ignore', message='Mean of empty slice')
-    cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster][:,source_array,:], norm_weights_dict[cluster][:,target_array, :])
+    #cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster][:,source_array,:], norm_weights_dict[cluster][:,target_array, :])
+    cor_values = einsumt("ijk, ijk -> ij", np.take(norm_weights_dict[cluster], source_array , axis =1),
+                         np.take(norm_weights_dict[cluster], target_array , axis =1), pool = threads)
     cor_means = np.nanmean(cor_values, axis=0)
     return cor_means
 
@@ -73,7 +76,7 @@ def precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter="
 
 
 
-def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers = 2):
+def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, threads, workers = 2):
     manager = mp.Manager()
     shared_norm_weights_dict = manager.dict(norm_weights_dict)
     #add header if creating new file
@@ -86,11 +89,14 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, workers 
         source_array.append(gene_dict[source])
         target_array.append(gene_dict[target])
     ALL_cor_means = []
-    with cf.ProcessPoolExecutor(max_workers=workers) as executor:
-        results = [executor.submit(calc_job_k, source_array, target_array, shared_norm_weights_dict, cluster) for cluster in range(k)]
-        for f in cf.as_completed(results):
-            cor_means = f.result()
-            ALL_cor_means.append(cor_means)
+    for cluster in range(k):
+        cor_means = calc_job_k(source_array, target_array, shared_norm_weights_dict, cluster, threads)
+        ALL_cor_means.append(cor_means)
+    #with cf.ProcessPoolExecutor(max_workers=workers) as executor:
+    #    results = [executor.submit(calc_job_k, source_array, target_array, shared_norm_weights_dict, cluster, threads) for cluster in range(k)]
+    #    for f in cf.as_completed(results):
+    #        cor_means = f.result()
+    #        ALL_cor_means.append(cor_means)
     ALL_cor_means = np.array(ALL_cor_means)
     
     batch_ensemble_scores = []
@@ -145,14 +151,18 @@ def calc_untargeted(k, genes , norm_weights_dict, aggregation_method, network_pa
         for f in cf.as_completed(results):
             print(f.result())
 
-def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked):
+def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked, threads):
     genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
     print("Calculating and writing correlations of positive edges...")
 
-    calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, workers = workers)
-    print("Calculating and writing correlations of negative edges...")
-    calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
+    calc_targeted(k, positive_met_edges_cor_path, positive_met_edges , genes, gene_dict, norm_weights_dict, threads, workers = workers)
+    #print("Calculating and writing correlations of negative edges...")
+    #calc_targeted(k, negative_met_edges_cor_path, negative_met_edges_unpacked , genes, gene_dict, norm_weights_dict, workers = workers)
 
+    print("Calculating and writing correlations of negative edges...")
+    negative_met_edges_chunks = [negative_met_edges_unpacked[x: x+ 50000 ] for x in range(0, len(negative_met_edges_unpacked), 50000)]
+    for chunk in negative_met_edges_chunks:
+        calc_targeted(k, negative_met_edges_cor_path, chunk , genes, gene_dict, norm_weights_dict, threads, workers = workers)
 
 
 def build_ensemble_GCN( Tid2Gid_dict, k_cluster_assignment_dict, expmat_path, k, network_path, aggregation_method, delim, workers):
