@@ -7,8 +7,9 @@ if __name__ == "__main__":
          parent_module= "/".join(abspath.split("/")[:-2])
          sys.path.insert(0, parent_module)
 
-import numpy as np
+from data_processing import read_write
 
+import numpy as np
 def generate_dict(positive_edges, All_genes, iterations=100):
     negative_edges = {}
     positive_edges_set = set(positive_edges)
@@ -37,6 +38,12 @@ def generate_dict(positive_edges, All_genes, iterations=100):
             print(i,"/",iterations, "negative sample datasets generated")
     return negative_edges
 
+def generate_dict_via_subset(negative_All_edges, positive_edges, iterations = 100):
+    negative_edges = {}
+    for i in range(iterations):
+        negative_edges[i] = list(np.random.choice(negative_All_edges[i], size = len(positive_edges), replace=False))
+    return negative_edges
+
 def edge_editor(dataset_edges , toreplace, replacement):
     if type(dataset_edges) == list:
         new_dataset_edges = [edge.replace(toreplace, replacement) for edge in dataset_edges]
@@ -47,5 +54,26 @@ def edge_editor(dataset_edges , toreplace, replacement):
             new_dataset_edges_dict[key] = [edge.replace(toreplace, replacement) for edge in edge_list]
             return new_dataset_edges_dict
 
-
-              
+if __name__ == "__main__":
+    Tid2Gid_dict = read_write.load_pickle("/mnt/md2/ken/correlation_networks/Plant-GCN_data/ATTED_b2/taxid3702_BS/Remove_isoforms/Tid2Gid_dict.pkl")
+    All_genes = list(Tid2Gid_dict.values())
+    positive_TF_edges = read_write.load_pickle( "/home/ken/Plant-GCN/test_data/Arabidopsis_edges/positive_TF_edges.pkl")
+    positive_met_edges = read_write.load_pickle( "/home/ken/Plant-GCN/test_data/Arabidopsis_edges/positive_met_edges.pkl")
+    positive_GO_edges = read_write.load_pickle( "/home/ken/Plant-GCN/test_data/Arabidopsis_edges/positive_GO_edges.pkl")
+    
+    positive_All_edges  = list(set(positive_met_edges + positive_TF_edges + positive_GO_edges ))
+    read_write.to_pickle(positive_All_edges,"/home/ken/Plant-GCN/test_data/Arabidopsis_edges/positive_All_edges.pkl" )
+    
+    negative_All_edges = generate_dict(positive_All_edges, All_genes, iterations=100)
+    
+    negative_met_edges = generate_dict_via_subset(negative_All_edges, positive_met_edges ,iterations=100)
+    negative_TF_edges = generate_dict_via_subset(negative_All_edges, positive_TF_edges ,iterations=100)
+    negative_GO_edges = generate_dict_via_subset(negative_All_edges, positive_GO_edges ,iterations=100)
+    
+    read_write.to_pickle(negative_All_edges,"/home/ken/Plant-GCN/test_data/Arabidopsis_edges/negative_All_edges.pkl" )
+    read_write.to_pickle(negative_met_edges,"/home/ken/Plant-GCN/test_data/Arabidopsis_edges/negative_met_edges.pkl" )
+    read_write.to_pickle(negative_GO_edges,"/home/ken/Plant-GCN/test_data/Arabidopsis_edges/negative_GO_edges.pkl" )
+    read_write.to_pickle(negative_TF_edges,"/home/ken/Plant-GCN/test_data/Arabidopsis_edges/negative_TF_edges.pkl" )
+    
+    for edge in list(positive_All_edges):
+        source, target = edge.split("--")
