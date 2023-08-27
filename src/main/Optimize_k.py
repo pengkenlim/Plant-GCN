@@ -8,12 +8,7 @@ if __name__ == "__main__":
          sys.path.insert(0, parent_module)
 
 import argparse
-from coexpression import bicor , pearson , spearman #for now only bicor and PCC is online
-from data_processing import read_write, network
-from edge_labels import negative_edges
-from analyses import network_performance
-import numpy as np
-import pandas as pd
+# import argparse to parse thread information so that we can set thread environment variable before importing numpy and sklearn modules
 
 if __name__ == "__main__":
         
@@ -38,6 +33,9 @@ if __name__ == "__main__":
 
         parser.add_argument("-ara_dir","--arabidopsis_data_dir",type=str, default = "",
         help = "Directory for arabidopsis edges.")
+        
+        parser.add_argument("-t", "--threads", type=int, metavar="", default=12,
+        help = "Number of threads for numpy operations." )
 
         args=parser.parse_args()
         
@@ -47,6 +45,19 @@ if __name__ == "__main__":
         cc = args.correlation_coefficient
         arabidopsis=args.arabidopsis
         arabidopsis_data_dir = args.arabidopsis_data_dir
+        threads = args.threads
+
+        #set threads and then import
+        os.environ["MKL_NUM_THREADS"] = str(threads)
+        os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
+        os.environ["OMP_NUM_THREADS"] = str(threads)
+
+        from coexpression import bicor , pearson , spearman #for now only bicor and PCC is online
+        from data_processing import read_write, network
+        from edge_labels import negative_edges
+        from analyses import network_performance
+        import numpy as np
+        import pandas as pd
 
         
         sub_outdir = os.path.join(output_dir , "Optimize_k")
@@ -74,26 +85,6 @@ if __name__ == "__main__":
                 positive_TF_edges = read_write.load_pickle(os.path.join(arabidopsis_data_dir, "positive_TF_edges.pkl"))
                 negative_TF_edges = read_write.load_pickle(os.path.join(arabidopsis_data_dir , "negative_TF_edges.pkl"))
 
-                #remove this. I am only doing it once. Basically change delimiter connecting two nodes from '-' to '--' instead
-                positive_All_edges = negative_edges.edge_editor(positive_All_edges, "-", "--")
-                read_write.to_pickle(positive_All_edges, os.path.join(arabidopsis_data_dir, "positive_All_edges.pkl"))
-                negative_All_edges = negative_edges.edge_editor(negative_All_edges, "-", "--")
-                read_write.to_pickle(negative_All_edges, os.path.join(arabidopsis_data_dir, "negative_All_edges.pkl"))
-
-                positive_met_edges = negative_edges.edge_editor(positive_met_edges, "-", "--")
-                read_write.to_pickle(positive_met_edges, os.path.join(arabidopsis_data_dir, "positive_met_edges.pkl"))
-                negative_met_edges = negative_edges.edge_editor(negative_met_edges, "-", "--")
-                read_write.to_pickle(negative_met_edges, os.path.join(arabidopsis_data_dir, "negative_met_edges.pkl"))
-                                
-                positive_TF_edges = negative_edges.edge_editor(positive_TF_edges, "-", "--")
-                read_write.to_pickle(positive_TF_edges, os.path.join(arabidopsis_data_dir, "positive_TF_edges.pkl"))
-                negative_TF_edges = negative_edges.edge_editor(negative_TF_edges, "-", "--")
-                read_write.to_pickle(negative_TF_edges, os.path.join(arabidopsis_data_dir, "negative_TF_edges.pkl"))\
-                
-                positive_GO_edges = negative_edges.edge_editor(positive_GO_edges, "-", "--")
-                read_write.to_pickle(positive_GO_edges, os.path.join(arabidopsis_data_dir, "positive_GO_edges.pkl"))
-                negative_GO_edges = negative_edges.edge_editor(negative_GO_edges, "-", "--")
-                read_write.to_pickle(negative_GO_edges, os.path.join(arabidopsis_data_dir, "negative_GO_edges.pkl"))
                 ##############################################################################################################
 
                 #establish dataframes
@@ -142,7 +133,7 @@ if __name__ == "__main__":
                         
                         optimize_k(k, positive_All_edges_cor_path, negative_All_edges_cor_path, expmat_path, Tid2Gid_dict,  
                                         k_cluster_assignment_dict, delim, workers, 
-                                        positive_All_edges, negative_All_edges_unpacked)
+                                        positive_All_edges, negative_All_edges_unpacked, threads)
                         score_types = ['Max','Avg','RAvg','RWA','RRWA']
                         
                         positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_All_edges_cor_path,
@@ -160,6 +151,8 @@ if __name__ == "__main__":
                                                           positive_TF_edges,
                                                           negative_TF_edges,
                                                           score_types)
+                        
+                        read_write.to_pickle(performance_dict ,os.path.join(k_sub_outdir, "performance_dict.pkl"))
                         
                         #HM
                         AVG_HM_full_df= network_performance.cat_k_to_df_ara(AVG_HM_full_df, score_types, performance_dict, k, "HM", "AVG" , full = True)
@@ -181,7 +174,7 @@ if __name__ == "__main__":
 
                         #All
                         AVG_All_full_df= network_performance.cat_k_to_df_ara(AVG_All_full_df, score_types, performance_dict, k, "All", "AVG" , full = True)
-                        AUC_ROC_ALl_full_df = network_performance.cat_k_to_df_ara(AUC_ROC_ALl_full_df, score_types, performance_dict, k, "All", "AUC_ROC" , full = True)
+                        AUC_ROC_All_full_df = network_performance.cat_k_to_df_ara(AUC_ROC_All_full_df, score_types, performance_dict, k, "All", "AUC_ROC" , full = True)
                         AUC_PRC_All_full_df = network_performance.cat_k_to_df_ara(AUC_PRC_All_full_df, score_types, performance_dict, k, "All", "AUC_PRC" , full = True)
 
                         AVG_All_summ_df= network_performance.cat_k_to_df_ara(AVG_All_summ_df, score_types, performance_dict, k, "All", "AVG" , full = False)
@@ -189,7 +182,7 @@ if __name__ == "__main__":
                         AUC_PRC_All_summ_df = network_performance.cat_k_to_df_ara(AUC_PRC_All_summ_df, score_types, performance_dict, k, "All", "AUC_PRC" , full = False)
                         
                         AVG_All_full_df.to_csv(os.path.join(cc_sub_outdir, "AVG_All_full_scores.csv"))
-                        AUC_ROC_ALl_full_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_All_full_scores.csv"))
+                        AUC_ROC_All_full_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_All_full_scores.csv"))
                         AUC_PRC_All_full_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_All_full_scores.csv"))
                         
                         AVG_All_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_All_summ_scores.csv"))
@@ -211,7 +204,7 @@ if __name__ == "__main__":
                         
                         AVG_met_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_met_summ_scores.csv"))
                         AUC_ROC_met_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_met_summ_scores.csv"))
-                        AUC_PRC_met_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_met_summ_scores.csv"))
+                        AUC_PRC_met_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_met_summ_scores.csv"))
                         
                         #GO
                         AVG_GO_full_df= network_performance.cat_k_to_df_ara(AVG_GO_full_df, score_types, performance_dict, k, "GO", "AVG" , full = True)
@@ -229,7 +222,7 @@ if __name__ == "__main__":
                         
                         AVG_GO_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_GO_summ_scores.csv"))
                         AUC_ROC_GO_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_GO_summ_scores.csv"))
-                        AUC_PRC_GO_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_GO_summ_scores.csv"))
+                        AUC_PRC_GO_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_GO_summ_scores.csv"))
 
                         #TF
                         AVG_TF_full_df= network_performance.cat_k_to_df_ara(AVG_TF_full_df, score_types, performance_dict, k, "GO", "AVG" , full = True)
@@ -247,7 +240,7 @@ if __name__ == "__main__":
                         
                         AVG_TF_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_TF_summ_scores.csv"))
                         AUC_ROC_TF_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_TF_summ_scores.csv"))
-                        AUC_PRC_TF_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_TF_summ_scores.csv"))
+                        AUC_PRC_TF_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_TF_summ_scores.csv"))
                 
                 result_string = network_performance.best_worst_k(AVG_HM_summ_df, score_types)
                 print(result_string)
