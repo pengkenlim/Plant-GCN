@@ -127,7 +127,7 @@ def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene,   nomin
                 f.write(f"{target}\t{ES}\t{rank}\n")
             else:
                 f.write(f"{target}\t{ES}\t{rank}\n")
-    return f"Calculated PCC {aggregation_method} for sequence:{gene}, {gene_idx} out of {len(genes)}"
+    return f"Calculated SCC {aggregation_method} for sequence:{gene}, {gene_idx} out of {len(genes)}"
 
 
 
