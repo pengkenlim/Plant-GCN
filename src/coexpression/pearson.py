@@ -1,8 +1,8 @@
 #setting sys.path for importing modules
 import os
 import sys
-parent_module = "/home/ken/Plant-GCN/src/" # remove
-sys.path.insert(0, parent_module) # remove
+#parent_module = "/home/ken/Plant-GCN/src/" # remove
+#sys.path.insert(0, parent_module) # remove
 
 if __name__ == "__main__":
          abspath= __file__
@@ -14,7 +14,9 @@ import concurrent.futures as cf
 import multiprocessing as mp
 from einsumt import einsumt
 from coexpression import ensemble
-
+import warnings
+import scipy
+import math
 
 
 def precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter="\t", workers=2):
@@ -96,9 +98,52 @@ def calc_targeted(k, path, edges , genes, gene_dict, nominators_dict, denominato
             ensemble_scores = ",".join([str(i) for i in ensemble_scores])
             f.write(f"{edge}\t{cluster_cor}\t{ensemble_scores}\n")
 
+def one_v_all(gene_idx, cluster, nominators_dict, denominators_dict):
+    nominator = np.dot(nominators_dict[cluster], nominators_dict[cluster][gene_idx])
+    denominator = np.dot(denominators_dict[cluster], denominators_dict[cluster][gene_idx])
+    cor_means = nominator/denominator
+    return cor_means
 
-def calc_untargeted():
-    pass
+def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene,   nominators_dict, denominators_dict ,full=False):
+    All_cor_means = []
+    for cluster in range(k):
+        cor_means  = one_v_all(gene_idx, cluster, nominators_dict, denominators_dict)
+        All_cor_means.append(cor_means)
+    ensemble_scores = ensemble.aggregate(All_cor_means, aggregation_method, axis = 0)
+    ensemble_ranks =  scipy.stats.rankdata(ensemble_scores, method="min", nan_policy= "omit") # this will give maximum rank
+    
+    #flip ranks to reverse ranks
+    if np.nanmax(ensemble_ranks) == 1: #happens when all ensemble scores are nan for what ever reason
+        ensemble_ranks = [math.nan for i in range(len(ensemble_ranks))]
+    else:
+        ensemble_ranks = np.nanmax(ensemble_ranks) - ensemble_ranks +1
+    
+    All_cor_means = [",".join([str(i2) for i2 in i]) for i in  np.transpose(All_cor_means)] # list of comma separated raw correlations
+
+    with open(os.path.join(network_path, gene), "w") as f:
+        f.write(f"Target\t{aggregation_method}\tRank_of_target\n")
+        for target, cor, ES, rank in zip(genes, All_cor_means, ensemble_scores ,ensemble_ranks):
+            if full:
+                #f.write(f"{target}\t{cor}\t{ES}\t{rank}\n") #functionality not fleshed out yet
+                f.write(f"{target}\t{ES}\t{rank}\n")
+            else:
+                f.write(f"{target}\t{ES}\t{rank}\n")
+    return f"Calculated PCC {aggregation_method} for sequence:{gene}, {gene_idx} out of {len(genes)}"
+
+
+
+def calc_untargeted(k, genes, nominators_dict, denominators_dict, aggregation_method, network_path):
+    #with cf.ProcessPoolExecutor(max_workers=workers) as executor:
+        #results = [executor.submit(calc_job , k, aggregation_method , genes, network_path, gene_idx, gene, nominators_dict, denominators_dict) for gene_idx, gene in enumerate(genes)]
+    for  gene_idx, gene in enumerate(genes):
+        result=calc_job(k, aggregation_method , genes, network_path, gene_idx, gene, nominators_dict, denominators_dict)
+        print(result)
+
+
+
+
+
+
         
 def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked, threads):
     genes, gene_dict, nominators_dict, denominators_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
@@ -113,3 +158,9 @@ def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expm
     negative_met_edges_chunks = [negative_met_edges_unpacked[x: x+ 200000 ] for x in range(0, len(negative_met_edges_unpacked), 200000)]
     for chunk in negative_met_edges_chunks:
         calc_targeted(k, negative_met_edges_cor_path, chunk , genes, gene_dict, shared_nominators_dict, shared_denominators_dict , threads, workers = workers)
+
+
+def build_ensemble_GCN( Tid2Gid_dict, k_cluster_assignment_dict, expmat_path, k, network_path, aggregation_method, delim, workers):
+    genes, gene_dict, nominators_dict, denominators_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)
+    print("Calculating and writing correlations...")
+    calc_untargeted(k, genes, nominators_dict, denominators_dict, aggregation_method, network_path)

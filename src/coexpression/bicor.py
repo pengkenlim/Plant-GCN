@@ -137,12 +137,14 @@ def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_we
     All_cor_means = [",".join([str(i2) for i2 in i]) for i in  np.transpose(All_cor_means)] # list of comma separated raw correlations
 
     with open(os.path.join(network_path, gene), "w") as f:
-        for gene, cor, ES, rank in zip(genes, All_cor_means, ensemble_scores ,ensemble_ranks):
+        f.write(f"Target\t{aggregation_method}\tRank_of_target\n")
+        for target, cor, ES, rank in zip(genes, All_cor_means, ensemble_scores ,ensemble_ranks):
             if full:
-                f.write(f"{gene}\t{cor}\t{ES}\t{rank}\n")
+                #f.write(f"{target}\t{cor}\t{ES}\t{rank}\n") #functionality not fleshed out yet
+                f.write(f"{target}\t{ES}\t{rank}\n")
             else:
-                f.write(f"{gene}\t{ES}\t{rank}\n")
-    return f"Calculated bicor ensemble correlations for sequence:{gene}, {gene_idx} out of {len(genes)}"
+                f.write(f"{target}\t{ES}\t{rank}\n")
+    return f"Calculated bicor {aggregation_method} for sequence:{gene}, {gene_idx} out of {len(genes)}"
 
 
 def calc_untargeted(k, genes , norm_weights_dict, aggregation_method, network_path, workers= 2):

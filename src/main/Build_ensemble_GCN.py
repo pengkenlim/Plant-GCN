@@ -8,18 +8,14 @@ if __name__ == "__main__":
          sys.path.insert(0, parent_module)
 
 import argparse
-from coexpression import bicor , pearson , spearman #for now only bicor and PCC is online
-from data_processing import read_write, network
-from analyses import network_performance
-import numpy as np
-import pandas as pd
+
 
 if __name__ == "__main__":
         
         parser= argparse.ArgumentParser(description="Build_ensemble_GCN.py.")
         
         parser.add_argument("-w", "--workers", type=int, metavar="", default=4,
-        help = "Number of workers for parallelization." )
+        help = "Number of workers for parallelization. Affects precalc of all coefficients. But only affects calc of bicor." )
 
         parser.add_argument("-o", "--output_dir", type=str, metavar="", required = True,
         help = "Directory to output. Same as Label_edges.py and Partition_expression_data.py" )
@@ -27,14 +23,19 @@ if __name__ == "__main__":
         parser.add_argument("-de", "--delimiter", type= str, metavar="", default = "t", choices=["t", "c"],
         help = "Delimiter for expression matrix. -de=\"t\" for tab seperated (.tsv). -de=\"c\" for comma seperated (.csv). TSV by default." )
 
-        parser.add_argument("-cc","--correlation_coefficient", type=str, default = "bicor", choices = ["PCC","SCC","bicor"] ,
-        help = "Correlation coefficient to optimize for. \'bicor\' by default.")
+        parser.add_argument("-cc","--correlation_coefficient", type= str, metavar="", default = "bicor", choices=["PCC","SCC","bicor"] ,
+        help = "Correlation coefficient to optimize for. bicor by default." )
 
-        parser.add_argument("-am","--aggregation_method", type=str, required = True, choices = ["Max","Avg","RAvg","RWA","RRWA"] ,
+        parser.add_argument("-am","--aggregation_method", type=str,  metavar="" , required = True, choices = ["Max","Avg","RAvg","RWA","RRWA"] ,
         help = "Aggregation method to generate ensemble network.")
 
-        parser.add_argument("-k","--k_clusters", type=int, default = 0,
+        parser.add_argument("-k","--k_clusters", metavar="", type=int, default = 0,
         help = "Number of clusters to partition the expression data. For k=0, will use best k as determined in Optimize_k.py step")
+
+        parser.add_argument("-t", "--threads", type=int, metavar="", default=4,
+        help = "Number of threads for numpy linear algebra operations. Affects PCC and SCC calc." )
+
+        
 
         args=parser.parse_args()
         
@@ -44,6 +45,18 @@ if __name__ == "__main__":
         correlation_coefficient = args.correlation_coefficient
         aggregation_method = args.aggregation_method
         k_clusters = args.k_clusters
+        threads =  args.threads
+
+        #set threads and then import
+        os.environ["MKL_NUM_THREADS"] = str(threads)
+        os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
+        os.environ["OMP_NUM_THREADS"] = str(threads)
+
+        from coexpression import bicor , pearson , spearman #for now only bicor and PCC is online
+        from data_processing import read_write, network
+        from analyses import network_performance
+        import numpy as np
+        import pandas as pd
 
         if delimiter == "t":
             delim = "\t"
