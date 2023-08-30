@@ -169,7 +169,7 @@ if __name__ == "__main__":
                         
                         AVG_HM_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_HM_summ_scores.csv"))
                         AUC_ROC_HM_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_HM_summ_scores.csv"))
-                        AUC_PRC_HM_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_HM_summ_scores.csv"))
+                        AUC_PRC_HM_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_HM_summ_scores.csv"))
 
 
                         #All
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                         
                         AVG_All_summ_df.to_csv(os.path.join(cc_sub_outdir, "AVG_All_summ_scores.csv"))
                         AUC_ROC_All_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_All_summ_scores.csv"))
-                        AUC_PRC_All_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCROC_All_summ_scores.csv"))
+                        AUC_PRC_All_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_All_summ_scores.csv"))
 
                         #Met
                         AVG_met_full_df= network_performance.cat_k_to_df_ara(AVG_met_full_df, score_types, performance_dict, k, "Met", "AVG" , full = True)
