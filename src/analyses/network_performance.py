@@ -99,7 +99,7 @@ def evaluate_ara(positive_edges_cor_dict, negative_edges_cor_dict, positive_All_
         performance_dict[score_type]["HM"] = {"AUC_ROC":{},"AUC_PRC":{}, "AVG":{}}
         for ds in negative_edges_cor_dict.keys():
             performance_dict[score_type]["HM"]["AUC_ROC"][ds] = stats.hmean([performance_dict[score_type][edge_dataset]["AUC_ROC"][ds] for edge_dataset in ["Met", "GO", "TF"]])
-            performance_dict[score_type]["HM"]["AUC_PRC"][ds] = stats.hmean([performance_dict[score_type][edge_dataset]["AUC_ROC"][ds] for edge_dataset in ["Met", "GO", "TF"]])
+            performance_dict[score_type]["HM"]["AUC_PRC"][ds] = stats.hmean([performance_dict[score_type][edge_dataset]["AUC_PRC"][ds] for edge_dataset in ["Met", "GO", "TF"]])
             performance_dict[score_type]["HM"]["AVG"][ds] = np.mean([performance_dict[score_type]["HM"]["AUC_ROC"][ds], 
                                                                      performance_dict[score_type]["HM"]["AUC_PRC"][ds]])
             

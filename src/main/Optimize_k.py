@@ -131,9 +131,9 @@ if __name__ == "__main__":
                         elif cc == "SCC":
                                 optimize_k = spearman.optimize_k
                         
-                        optimize_k(k, positive_All_edges_cor_path, negative_All_edges_cor_path, expmat_path, Tid2Gid_dict,  
-                                        k_cluster_assignment_dict, delim, workers, 
-                                        positive_All_edges, negative_All_edges_unpacked, threads)
+                        #optimize_k(k, positive_All_edges_cor_path, negative_All_edges_cor_path, expmat_path, Tid2Gid_dict,  
+                        #                k_cluster_assignment_dict, delim, workers, 
+                        #                positive_All_edges, negative_All_edges_unpacked, threads)
                         score_types = ['Max','Avg','RAvg','RWA','RRWA']
                         
                         positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_All_edges_cor_path,
@@ -147,13 +147,14 @@ if __name__ == "__main__":
                                                           positive_met_edges,
                                                           negative_met_edges,
                                                           positive_GO_edges,
-                                                          negative_GO_edges,
+                                                         negative_GO_edges,
                                                           positive_TF_edges,
                                                           negative_TF_edges,
                                                           score_types)
                         
                         read_write.to_pickle(performance_dict ,os.path.join(k_sub_outdir, "performance_dict.pkl"))
                         
+                        #performance_dict =  read_write.load_pickle(os.path.join(k_sub_outdir, "performance_dict.pkl"))
                         #HM
                         AVG_HM_full_df= network_performance.cat_k_to_df_ara(AVG_HM_full_df, score_types, performance_dict, k, "HM", "AVG" , full = True)
                         AUC_ROC_HM_full_df = network_performance.cat_k_to_df_ara(AUC_ROC_HM_full_df, score_types, performance_dict, k, "HM", "AUC_ROC" , full = True)
