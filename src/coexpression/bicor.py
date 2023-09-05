@@ -114,16 +114,18 @@ def calc_targeted(k, path, edges , genes, gene_dict, norm_weights_dict, threads,
 
 
 
-def one_v_all(gene_idx, cluster, norm_weights_dict):
+def one_v_all(gene_idx, cluster, norm_weights_dict, threads):
     warnings.filterwarnings(action='ignore', message='Mean of empty slice')
-    cor_values = np.einsum("ijk, ijk -> ij", norm_weights_dict[cluster], np.broadcast_to(norm_weights_dict[cluster][:,[gene_idx], :], norm_weights_dict[cluster].shape))
+    #cor_values = np.einsumt("ijk, ijk -> ij", norm_weights_dict[cluster], np.broadcast_to(norm_weights_dict[cluster][:,[gene_idx], :], norm_weights_dict[cluster].shape))
+    cor_values = einsumt("ijk, ijk -> ij", norm_weights_dict[cluster], np.broadcast_to(norm_weights_dict[cluster][:,[gene_idx], :], norm_weights_dict[cluster].shape),
+                            pool = threads)
     cor_means = np.nanmean(cor_values, axis=0)
     return cor_means
 
-def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_weights_dict ,full=False):
+def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_weights_dict ,threads ,full=False):
     All_cor_means = []
     for cluster in range(k):
-        cor_means  = one_v_all(gene_idx, cluster, norm_weights_dict)
+        cor_means  = one_v_all(gene_idx, cluster, norm_weights_dict, threads)
         All_cor_means.append(cor_means)
     ensemble_scores = ensemble.aggregate(All_cor_means, aggregation_method, axis = 0)
     ensemble_ranks =  scipy.stats.rankdata(ensemble_scores, method="min", nan_policy= "omit") # this will give maximum rank
@@ -148,10 +150,18 @@ def calc_job(k, aggregation_method, genes, network_path, gene_idx, gene, norm_we
 
 
 def calc_untargeted(k, genes , norm_weights_dict, aggregation_method, network_path, workers= 2):
-    with cf.ProcessPoolExecutor(max_workers=workers) as executor:
-        results = [executor.submit(calc_job , k, aggregation_method , genes, network_path, gene_idx, gene, norm_weights_dict) for gene_idx, gene in enumerate(genes)]
-        for f in cf.as_completed(results):
-            print(f.result())
+    #manager = mp.Manager()
+    #shared_norm_weights_dict = manager.dict(norm_weights_dict)
+    threads = workers
+    for gene_idx, gene in enumerate(genes):
+        result = calc_job( k, aggregation_method , genes, network_path, gene_idx, gene, norm_weights_dict, threads)
+        print(result)
+    
+    
+    #with cf.ProcessPoolExecutor(max_workers=workers) as executor:
+    #    results = [executor.submit(calc_job , k, aggregation_method , genes, network_path, gene_idx, gene, norm_weights_dict) for gene_idx, gene in enumerate(genes)]
+    #    for f in cf.as_completed(results):
+    #        print(f.result())
 
 def optimize_k(k, positive_met_edges_cor_path, negative_met_edges_cor_path ,expmat_path, Tid2Gid_dict,  k_cluster_assignment_dict, delim, workers, positive_met_edges, negative_met_edges_unpacked, threads):
     genes, gene_dict , norm_weights_dict = precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter=delim, workers=workers)

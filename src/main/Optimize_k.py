@@ -131,9 +131,9 @@ if __name__ == "__main__":
                         elif cc == "SCC":
                                 optimize_k = spearman.optimize_k
                         
-                        #optimize_k(k, positive_All_edges_cor_path, negative_All_edges_cor_path, expmat_path, Tid2Gid_dict,  
-                        #                k_cluster_assignment_dict, delim, workers, 
-                        #                positive_All_edges, negative_All_edges_unpacked, threads)
+                        optimize_k(k, positive_All_edges_cor_path, negative_All_edges_cor_path, expmat_path, Tid2Gid_dict,  
+                                        k_cluster_assignment_dict, delim, workers, 
+                                        positive_All_edges, negative_All_edges_unpacked, threads)
                         score_types = ['Max','Avg','RAvg','RWA','RRWA']
                         
                         positive_edges_cor_dict, negative_edges_cor_dict , score_types = network.load_edges(positive_All_edges_cor_path,
@@ -226,13 +226,13 @@ if __name__ == "__main__":
                         AUC_PRC_GO_summ_df.to_csv(os.path.join(cc_sub_outdir, "AUCPRC_GO_summ_scores.csv"))
 
                         #TF
-                        AVG_TF_full_df= network_performance.cat_k_to_df_ara(AVG_TF_full_df, score_types, performance_dict, k, "GO", "AVG" , full = True)
-                        AUC_ROC_TF_full_df = network_performance.cat_k_to_df_ara(AUC_ROC_TF_full_df, score_types, performance_dict, k, "GO", "AUC_ROC" , full = True)
-                        AUC_PRC_TF_full_df = network_performance.cat_k_to_df_ara(AUC_PRC_TF_full_df, score_types, performance_dict, k, "GO", "AUC_PRC" , full = True)
+                        AVG_TF_full_df= network_performance.cat_k_to_df_ara(AVG_TF_full_df, score_types, performance_dict, k, "TF", "AVG" , full = True)
+                        AUC_ROC_TF_full_df = network_performance.cat_k_to_df_ara(AUC_ROC_TF_full_df, score_types, performance_dict, k, "TF", "AUC_ROC" , full = True)
+                        AUC_PRC_TF_full_df = network_performance.cat_k_to_df_ara(AUC_PRC_TF_full_df, score_types, performance_dict, k, "TF", "AUC_PRC" , full = True)
 
-                        AVG_TF_summ_df= network_performance.cat_k_to_df_ara(AVG_TF_summ_df, score_types, performance_dict, k, "GO", "AVG" , full = False)
-                        AUC_ROC_TF_summ_df = network_performance.cat_k_to_df_ara(AUC_ROC_TF_summ_df, score_types, performance_dict, k, "GO", "AUC_ROC" , full = False)
-                        AUC_PRC_TF_summ_df = network_performance.cat_k_to_df_ara(AUC_PRC_TF_summ_df, score_types, performance_dict, k, "GO", "AUC_PRC" , full = False)
+                        AVG_TF_summ_df= network_performance.cat_k_to_df_ara(AVG_TF_summ_df, score_types, performance_dict, k, "TF", "AVG" , full = False)
+                        AUC_ROC_TF_summ_df = network_performance.cat_k_to_df_ara(AUC_ROC_TF_summ_df, score_types, performance_dict, k, "TF", "AUC_ROC" , full = False)
+                        AUC_PRC_TF_summ_df = network_performance.cat_k_to_df_ara(AUC_PRC_TF_summ_df, score_types, performance_dict, k, "TF", "AUC_PRC" , full = False)
 
                         
                         AVG_TF_full_df.to_csv(os.path.join(cc_sub_outdir, "AVG_TF_full_scores.csv"))
