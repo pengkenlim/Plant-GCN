@@ -9,7 +9,6 @@ if __name__ == "__main__":
 
 import argparse
 import numpy as np
-import scipy
 
 from data_processing import read_write , network
 
