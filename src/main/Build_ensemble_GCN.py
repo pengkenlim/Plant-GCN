@@ -66,7 +66,8 @@ if __name__ == "__main__":
         if k_clusters ==0:
             with open(os.path.join( output_dir, "Optimize_k",correlation_coefficient, "Best_worst_k.csv"), "r") as f:
                 for line in f:
-                    if aggregation_method in line:
+                    line_AM = line.split("\t")[0]
+                    if aggregation_method  == line_AM:
                         max_score , max_k = line.split("\t")[1:3]
                 
             print(f"k=0 specified. Will use best k of {max_k} as determined by Optimize_K.py")
