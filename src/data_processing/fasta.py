@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
 #func definitions
 
-def load_fasta(path, replace, replace_with, exclude, sep=".",  level =1):
+def load_fasta(path, replace, replace_with, exclude, description_mode, description_mode_end, sep=".",  level =1):
     """use sep to specify delimiter to split TranscriptID into GeneID
     Default is '.' 
     e.g. GENE_1234.1 --> GENE_1234"""
@@ -21,11 +21,15 @@ def load_fasta(path, replace, replace_with, exclude, sep=".",  level =1):
     contents = [chunk for chunk in contents if chunk != ""]
     for chunk in contents:
         transcript_ID = chunk.split("\n")[0].split(" ")[0].split("\t")[0]
-        if len(transcript_ID.split(sep)) > 1:
-            Gene_ID = sep.join(transcript_ID.split(sep)[:-level])
+        if description_mode == "impossibleplaceholder":
+            
+            if len(transcript_ID.split(sep)) > 1:
+                Gene_ID = sep.join(transcript_ID.split(sep)[:-level])
+            else:
+                Gene_ID = transcript_ID
+            Gene_ID = Gene_ID.upper().replace(replace, replace_with)
         else:
-            Gene_ID = transcript_ID
-        Gene_ID = Gene_ID.upper().replace(replace, replace_with)
+            Gene_ID = chunk.split(description_mode)[1].split(description_mode_end)[0].upper()
         length = len("".join(chunk.split("\n")[1:]))
         if exclude.upper() not in transcript_ID.upper():
             fasta_contents_dict[transcript_ID]= {"Gene_ID":Gene_ID, "Fasta_Chunk": chunk, "Length": length}
