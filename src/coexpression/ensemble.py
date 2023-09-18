@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
 import numpy as np
 import scipy.stats
+import warnings
 
 def nan2zeros(array):
     array_2 = array.copy()
@@ -40,7 +41,7 @@ def RWA(array , rev_ranks, axis):
     return unscale(np.average(scale(array), weights = custom_weights, axis = axis))
 
 def aggregate(cor_values, mode, axis = 0):
-    np.seterr(all="ignore")
+    warnings.filterwarnings(action='ignore', message='Mean of empty slice')
     cor_values = np.array(cor_values)
     cor_values = nan2zeros(cor_values)
     rectified_cor_values = rectify(cor_values)

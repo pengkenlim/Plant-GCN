@@ -30,3 +30,8 @@ def standardize_transform(Matrix, n_pcs=100):
     pc_variances = np.round(pca.explained_variance_ratio_*100, decimals=1)
 
     return pca_data , pc_variances
+
+def subset_pca_data(pca_data, n_pcs=1000):
+    """subset pca_data to a set number of pcs"""
+    pca_data = pca_data.iloc[:, 0:n_pcs ]
+    return pca_data 
