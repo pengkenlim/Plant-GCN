@@ -30,6 +30,8 @@ if __name__ == "__main__":
         parser.add_argument("-r", "--replace", type=str, metavar="", default="", help= "Substring within transcriptIDs to replace in order to get geneIDs")
         parser.add_argument("-rw", "--replace_with", type=str, metavar="", default= "", help= "replacement string")
         parser.add_argument("-ex", "--exclude", type=str, metavar="", default= "impossibleplaceholder", help= "exclude transcripts with these substrings")
+        parser.add_argument("-des", "--description_mode", type=str, metavar="", default= "impossibleplaceholder", help= "use description to extract geneID. Start flank seq to split description ")
+        parser.add_argument("-des_end", "--description_mode_end", type=str, metavar="", default= " ", help= "end flank seq to split description")
         
         args=parser.parse_args()
         if args.batch_mode == None:
@@ -41,14 +43,15 @@ if __name__ == "__main__":
                 replace = args.replace
                 replace_with = args.replace_with
                 exclude = args.exclude
-                
+                description_mode = args.description_mode
+                description_mode_end = args.description_mode_end
                 if output_dir == "":
                     sys.exit("--output not specified")
                 read_write.establish_dir(output_dir, isdir = True)
                 sub_outdir = os.path.join(output_dir, "Remove_isoforms")
                 read_write.establish_dir(sub_outdir, isdir = True)
 
-                fasta_contents_dict = fasta.load_fasta(input_fasta, replace, replace_with, exclude, sep = delimiter, level = level)
+                fasta_contents_dict = fasta.load_fasta(input_fasta, replace, replace_with, exclude, description_mode, description_mode_end, sep = delimiter, level = level)
                 print(f"\n\nTotal number of transcripts in {input_fasta}: \n{len(fasta_contents_dict)}\n")
                 gene_dict =  fasta.retain_longest_isoforms(fasta_contents_dict)
                 print(f"Total number of genes: \n{len(gene_dict)}\n")
