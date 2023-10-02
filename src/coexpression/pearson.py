@@ -20,7 +20,10 @@ import math
 
 
 def precalc(expmat_path, Tid2Gid_dict, k_cluster_assignment_dict, k, delimiter="\t", workers=2):
-    assignment= k_cluster_assignment_dict[k]
+    if k == 1:
+        assignment = np.ones(len(k_cluster_assignment_dict[k+1]),dtype=int)
+    else:
+        assignment= k_cluster_assignment_dict[k]
     genes = []
     nominators_dict, denominators_dict, = {cluster:[] for cluster in range(k)}, {cluster:[] for cluster in range(k)}
     with open(expmat_path, 'r') as fin:
